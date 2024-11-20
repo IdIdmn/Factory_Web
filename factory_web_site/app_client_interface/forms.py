@@ -37,7 +37,7 @@ class OrderForm(forms.ModelForm):
         valid_extensions = ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz']
         if self.filename is not None and not any(self.filename.endswith(ext) for ext in valid_extensions):
             raise ValidationError('Файл должен быть архивом.')
-        if project_files is None and self.cleaned_data.get('order_type') == "Создание детали по чертежам":
+        if self.filename is None and project_files is None and self.cleaned_data.get('order_type') == "Создание детали по чертежам":
             raise ValidationError('Должны быть загружены файлы проекта.')
         if project_files is not None and not any(project_files.name.endswith(ext) for ext in valid_extensions):
             raise ValidationError('Файл должен быть архивом.')
