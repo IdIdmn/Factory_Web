@@ -1,0 +1,11 @@
+{% load static %}
+<header class="nav-bar">
+    {% include 'components/common-image-logo.html' %}
+    <div class="nav-empty-space"></div>
+    <div id="nav-connect-btn">
+        <b>Сделать заказ</b>
+    </div>
+    <a href="{% url 'log_reg:login' %}" class="nav-logIn-image-pointer">
+        <img src="{% static 'clients_interface/Files/log_in.png' %}" class="nav-logIn-image">
+    </a>
+</header>

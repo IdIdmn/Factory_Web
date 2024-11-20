@@ -1,0 +1,26 @@
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-field-title first-line">{{form.email.label_tag}}</div>
+    <div>
+        {{form.email}}
+    </div>
+    {% if form.email.errors %}
+    <p id="form-error">{{ form.email.errors.0 }}</p>
+    {% endif %}
+    <div class="form-field-title">{{form.description.label_tag}}</div>
+    <div>
+        {{form.description}}
+    </div>
+    <div class="form-field-title">{{form.order_type.label_tag}}</div>
+    <div>
+        {{form.order_type}}
+    </div>
+    <div class="form-field-title">{{form.files.label_tag}}</div>
+    <div>
+        {{form.files}}
+    </div>
+    {% if form.files.errors %}
+    <p id="form-error">{{ form.files.errors.0 }}</p>
+    {% endif %}
+    <button type="submit" class="send-info-btn">Отправить</button>
+</form>
