@@ -44,6 +44,19 @@ body{
     background: #69aae9;
 }
 
+#profile-image{
+    height: 45%;
+    border-radius: 25px;
+    margin-left: 20px;
+    cursor: pointer;
+    user-select: none;
+    align-self: center;
+}
+
+#profile-image:hover{
+    background: #69aae9;
+}
+
 .nav-logIn-image{
     height: 100%;
 }
@@ -64,6 +77,14 @@ body{
     height: 90%;
     align-self: center;
     user-select: none;
+}
+
+#profile-menu{
+
+}
+
+#profile-menu-option{
+    
 }
 
 .background-img{

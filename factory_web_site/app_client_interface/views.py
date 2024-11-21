@@ -19,8 +19,8 @@ def main_page(request):
         form_data = request.session.pop('form_data', None)
         file_name = request.session.pop('filename', None)
         if form_data is not None:
-            form = OrderForm(form_data, filename = file_name)
+            form = OrderForm(form_data, filename = file_name, user = request.user)
         else:
-            form = OrderForm()
+            form = OrderForm(user = request.user)
     return render(request, "MainPage.html", {'form': form, 'title': "МОЗ №1"})
 

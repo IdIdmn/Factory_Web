@@ -6,4 +6,6 @@ app_name = "log_reg"
 urlpatterns = [
     path('sign_up/', sign_up, name="sign_up"),
     path('sign_in/', sign_in, name="sign_in"),
+    path('logout/', log_out, name="logout"),
+
 ]

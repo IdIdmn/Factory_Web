@@ -19,12 +19,15 @@ class OrderForm(forms.ModelForm):
         fields = ['email', 'description', "order_type", "files"]
 
     def __init__(self, *args, **kwargs):
+        current_user = kwargs.pop('user', None)
         self.filename = kwargs.pop('filename', None)
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update({'class': 'order-email-field input-field'})
         self.fields['description'].widget.attrs.update({'class': 'textarea-order-field input-field'})
         self.fields['order_type'].widget.attrs.update({'class': 'order-type-field input-field'})
         self.fields['files'].widget.attrs.update({'class': 'fileinput-order-field input-field'})
+        if current_user is not None and current_user.is_authenticated and current_user.client_info is not None:
+            self.fields['email'].initial = current_user.client_info.email
 
     def clean_email(self):
         email = self.cleaned_data.get('email')

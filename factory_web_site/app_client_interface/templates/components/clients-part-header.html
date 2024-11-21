@@ -5,7 +5,11 @@
     <div id="nav-connect-btn">
         <b>Сделать заказ</b>
     </div>
+    {% if user.is_authenticated %}
+    <img src="{% static 'clients_interface/Files/profile_icon.png' %}" id="profile-image">
+    {% else %}
     <a href="{% url 'log_reg:sign_in' %}" class="nav-logIn-image-pointer">
         <img src="{% static 'clients_interface/Files/log_in.png' %}" class="nav-logIn-image">
     </a>
+    {% endif %}
 </header>
