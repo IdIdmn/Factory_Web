@@ -5,11 +5,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>МОЗ №1</title>
+    <title>{{title}}</title>
     <link rel="stylesheet" type="text/css" href="{% static 'log_reg_form/CSS/style.css' %}">
 </head>
 <body>
-    {% block content %}
-
-    {% endblock %}
+    <div class="form-container">
+        {% block content %}
+        {% endblock %}
+    </div>  
 </body>

@@ -27,20 +27,20 @@ class OrderForm(forms.ModelForm):
         self.fields['files'].widget.attrs.update({'class': 'fileinput-order-field input-field'})
 
     def clean_email(self):
-        order_email = self.cleaned_data.get('email')
-        if not (re.match(r"[^@\s]+\@[^@\s]+$", order_email) and order_email.count('.') > 0):
+        email = self.cleaned_data.get('email')
+        if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
             raise ValidationError('Введён некорректный почтовый адрес.')
-        return order_email
+        return email
 
     def clean_files(self):
-        project_files = self.cleaned_data.get('files')
+        files = self.cleaned_data.get('files')
         valid_extensions = ['.zip', '.rar', '.7z', '.tar', '.gz', '.bz2', '.xz']
         if self.filename is not None and not any(self.filename.endswith(ext) for ext in valid_extensions):
             raise ValidationError('Файл должен быть архивом.')
-        if self.filename is None and project_files is None and self.cleaned_data.get('order_type') == "Создание детали по чертежам":
+        if self.filename is None and files is None and self.cleaned_data.get('order_type') == "Создание детали по чертежам":
             raise ValidationError('Должны быть загружены файлы проекта.')
-        if project_files is not None and not any(project_files.name.endswith(ext) for ext in valid_extensions):
+        if files is not None and not any(files.name.endswith(ext) for ext in valid_extensions):
             raise ValidationError('Файл должен быть архивом.')
-        return project_files
+        return files
 
         

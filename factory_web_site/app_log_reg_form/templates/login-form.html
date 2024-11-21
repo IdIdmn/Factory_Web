@@ -1,0 +1,26 @@
+{% extends 'layouts/base-log.html' %}
+
+{% block content %}
+    <p class="form-title"><b>Вход в аккаунт</b></p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="first-line form-text">{{form.username.label_tag}}</div>
+        <div class>
+            {{form.username}}
+        </div>
+        {% if form.username.errors %}
+        <p id="form-error">{{ form.username.errors.0 }}</p>
+        {% endif %}
+        <div class="form-text">{{form.password.label_tag}}</div>
+        <div class>
+            {{form.password}}
+        </div>
+        {% if form.errors %}
+        <p id="form-error">{{form.password.errors.0}}</p>
+        {% endif %}
+        <p class="form-text">Ещё нет аккаунта? <a class="another-form-pointer" href="{% url 'log_reg:sign_up' %}">Зарегистрироваться</a></p>
+        <div class="submit-button-containter">
+            <button type="submit" class="send-info-btn">Войти</button>
+        </div>
+    </form>
+{% endblock %}

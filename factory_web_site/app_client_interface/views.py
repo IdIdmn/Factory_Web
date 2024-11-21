@@ -22,5 +22,5 @@ def main_page(request):
             form = OrderForm(form_data, filename = file_name)
         else:
             form = OrderForm()
-    return render(request, "MainPage.html", {'form': form})
+    return render(request, "MainPage.html", {'form': form, 'title': "МОЗ №1"})
 

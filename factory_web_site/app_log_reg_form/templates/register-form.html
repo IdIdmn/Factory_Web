@@ -1,7 +1,44 @@
 {% extends 'layouts/base-log.html' %}
 
 {% block content %}
-<div class="reg-form-container">
-    asfasdfasdf
-</div>
+    <p class="form-title"><b>Регистрация</b></p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="first-line form-text">{{form.username.label_tag}}</div>
+        <div class>
+            {{form.username}}
+        </div>
+        {% if form.username.errors %}
+            <p id="form-error">{{ form.username.errors.0 }}</p>
+        {% endif %}
+        <div class="form-text">{{form.password.label_tag}}</div>
+        <div class>
+            {{form.password}}
+        </div>
+        <div class="form-text">{{form.full_name.label_tag}}</div>
+        <div class>
+            {{form.full_name}}
+        </div>
+        {% if form.full_name.errors %}
+            <p id="form-error">{{ form.full_name.errors.0 }}</p>
+        {% endif %}
+        <div class="form-text">{{form.email.label_tag}}</div>
+        <div class>
+            {{form.email}}
+        </div>
+        {% if form.email.errors %}
+            <p id="form-error">{{ form.email.errors.0 }}</p>
+        {% endif %}
+        <div class="form-text">{{form.phone_number.label_tag}}</div>
+        <div class>
+            {{form.phone_number}}
+        </div>
+        {% if form.phone_number.errors %}
+            <p id="form-error">{{ form.phone_number.errors.0 }}</p>
+        {% endif %}
+        <p class="form-text">Уже есть аккаунт? <a class="another-form-pointer" href="{% url 'log_reg:sign_in' %}">Войти</a></p>
+        <div class="submit-button-containter">
+            <button type="submit" class="send-info-btn">Зарегистрироваться</button>
+        </div>
+    </form>
 {% endblock %}
