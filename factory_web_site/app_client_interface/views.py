@@ -1,5 +1,6 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
+from django.forms import model_to_dict
 from .models import *
 from .forms import *
 from django.contrib.auth.decorators import login_required
@@ -32,6 +33,11 @@ def client_profile(request):
 
 @login_required(login_url="log_reg:sign_in")
 def edit_profile(request):
-    # доделать хуйню эту
-    form = ClientEditForm(initial={ 'full_name': 1, 'phone_number': 1})
-    return render(request, "client-profile.html", {'title': "Изменение профиля"})
+    if request.method == "POST":
+        form = ClientEditForm(request.POST, email = request.user.client_info.email)
+        if form.is_valid():
+            form.save()
+            return redirect(reverse("main:client_profile"))
+    else:
+        form = ClientEditForm(initial=model_to_dict(request.user.client_info), email = request.user.client_info.email)
+    return render(request, "edit-profile.html", {'title': "Изменение профиля", 'form': form})

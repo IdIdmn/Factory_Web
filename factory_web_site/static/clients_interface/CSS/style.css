@@ -199,10 +199,6 @@ ul li{
     margin-top: 10px;
 }
 
-.first-line{
-    margin-top: 0px;
-}
-
 .input-field{
     margin-top: 10px
 }
@@ -273,6 +269,7 @@ ul li{
 
 .content .profile-text{
     border-bottom: solid 1px #9b9b9b;
+    margin: 21px 0px 21px 0px
 }
 
 .profile-values-container .profile-text{
@@ -352,6 +349,22 @@ td {border-top:1px solid #e0e0e0;
     border-right:1px solid #e0e0e0;
     background: #fefefe;
     font-size: 17px;
+}
+
+.short-text-field{
+    border:1px solid black;
+    border-radius:5px;
+    height: 25px;
+    width: 220px;
+    margin: 3.5px 0px 7.5px 0px
+}
+
+.content .last-line{
+    margin-bottom: 0px;
+}
+
+.first-line{
+    margin-top: 0px;
 }
 
 footer{

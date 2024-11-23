@@ -57,6 +57,7 @@ class OrderForm(forms.ModelForm):
         
 
 class ClientEditForm(forms.ModelForm):
+    email = forms.CharField(label="Адрес электронной почты")
     full_name = forms.CharField(label="ФИО")
     phone_number = forms.CharField(label="Номер телефона")
 
@@ -66,9 +67,17 @@ class ClientEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.email = kwargs.pop('email', None)
+        print(self.email)
         super().__init__(*args, **kwargs)
-        self.fields['full_name'].widget.attrs.update({'class': 'input-field'})
-        self.fields['phone_number'].widget.attrs.update({'class': 'input-field'})
+        self.fields['email'].widget.attrs.update({'class': 'short-text-field input-field'})
+        self.fields['full_name'].widget.attrs.update({'class': 'short-text-field input-field'})
+        self.fields['phone_number'].widget.attrs.update({'class': 'short-text-field input-field'})
+
+    def clean_email(self):
+        email = self.cleaned_data.get("email")
+        if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
+            raise ValidationError("Некорректный почтовый адрес")
+        return email
 
     def clean_full_name(self):
         full_name = self.cleaned_data.get('full_name')
@@ -91,6 +100,7 @@ class ClientEditForm(forms.ModelForm):
     def save(self, commit=True):
         client = Client.objects.get(email=self.email)
         if commit:
+            client.email = self.cleaned_data.get("email")
             client.full_name = self.cleaned_data.get("full_name")
             client.phone_number = self.cleaned_data.get("phone_number")
             client.save()

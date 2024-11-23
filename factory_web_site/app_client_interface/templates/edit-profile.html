@@ -9,23 +9,30 @@
     <div class="nav-empty-space"></div>
 </header>
 <section class="content">
-    <p class="profile-title"><b>Данные о клиенте:</b></p>
-    <div class="profile-info-container">
-        <div class="profile-titles-container">
-            <p class="profile-text">Имя пользователя:</p>
-            <p class="profile-text">Адрес электронной почты:</p>
-            <p class="profile-text">ФИО:</p>
-            <p class="profile-text">Номер телефона:</p>
+    <form method="post">
+        {% csrf_token %}
+        <p class="profile-title"><b>Данные о клиенте:</b></p>
+        <div class="profile-info-container">
+            <div class="profile-titles-container">
+                <p class="profile-text">Имя пользователя:</p>
+                <p class="profile-text">Адрес электронной почты:</p>
+                <p class="profile-text">ФИО:</p>
+                <p class="profile-text last-line">Номер телефона:</p>
+            </div>
+            <div class="profile-values-container">
+                <p class="profile-text">{{ user.username }}</p>
+                <div class="profile-text">{{form.email}}</div>
+                <div class="profile-text">{{form.full_name}}</div>
+                <div class="profile-text last-line">{{form.phone_number}}</div>
+            </div>
         </div>
-        <div class="profile-values-container">
-            <p class="profile-text">{{ user.username }}</p>
-            <p class="profile-text">{{ user.client_info.email }}</p>
-            <div> {{form.full_name}} </div>
-            <div> {{form.phone_number}} </div>
-        {% else %}
-        </div>
-    </div>
-    <button type="submit" class="send-info-btn">Отправить</button>
+        <button type="submit" class="send-info-btn">Отправить</button>
+    </form>
+    {% if form.errors %}
+        {% for field in form %}
+            <p id="form-error">{{ field.errors.0 }}</p>
+        {% endfor %}
+    {% endif %}
 </section>
 <footer>
     <div class="footer-text">© Все права защищены</div>

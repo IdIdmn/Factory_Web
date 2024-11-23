@@ -24,7 +24,7 @@
             <p class="profile-text">{{ user.client_info.phone_number }}</p>
         </div>
     </div>
-    <a href="{% url 'main:client_profile' %}" class="profile-button edit-button">Редактировать</a>
+    <a href="{% url 'main:edit_profile' %}" class="profile-button edit-button">Редактировать</a>
     <a href="{% url 'log_reg:logout' %}" class="profile-button logout-button">Выйти</a>
     <p class="profile-title order-history-title"><b>История заказов:</b></p>
     {% if user_orders %}
@@ -48,7 +48,7 @@
                         {% endif %}
                     {% endfor%}
                     <td>
-                        {% if field %}
+                        {% if order.files %}
                             <a href="{{order.files.url}}" download>Файл проекта</a> 
                         {% endif %}
                     </td>
