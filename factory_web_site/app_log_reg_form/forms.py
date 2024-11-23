@@ -48,7 +48,7 @@ class SignUpForm(forms.ModelForm):
     
     def clean_full_name(self):
         full_name = self.cleaned_data.get('full_name')
-        if not re.match(r"[а-яА-ЯёЁ]+ [а-яА-ЯёЁ]+ [а-яА-ЯёЁ]+$", full_name):
+        if not re.match(r"[A-Za-zа-яА-ЯёЁ]+ [A-Za-zа-яА-ЯёЁ]+ [A-Za-zа-яА-ЯёЁ]+$", full_name):
             raise ValidationError("Введите ФИО корректно")
         return full_name
         
@@ -77,6 +77,13 @@ class SignUpForm(forms.ModelForm):
         if commit:
             user.save()
             user.groups.add(Group.objects.get(name='Client'))
-            Client.objects.create( user=user, full_name=self.cleaned_data["full_name"], email=self.cleaned_data["email"], phone_number=self.cleaned_data["phone_number"] )
+            try:
+                client = Client.objects.get(email=self.cleaned_data.get("email"))
+                client.full_name = self.cleaned_data.get("full_name")
+                client.phone_number = self.cleaned_data.get("phone_number")
+                client.user = user
+                client.save()
+            except Client.DoesNotExist:
+                Client.objects.create( user=user, full_name=self.cleaned_data["full_name"], email=self.cleaned_data["email"], phone_number=self.cleaned_data["phone_number"] )
         return user
         

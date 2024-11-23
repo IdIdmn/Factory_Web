@@ -1,7 +1,8 @@
 from django.shortcuts import render, redirect
 from django.urls import reverse
-
-from .forms import OrderForm
+from .models import *
+from .forms import *
+from django.contrib.auth.decorators import login_required
 
 
 def main_page(request):
@@ -24,3 +25,13 @@ def main_page(request):
             form = OrderForm(user = request.user)
     return render(request, "MainPage.html", {'form': form, 'title': "МОЗ №1"})
 
+@login_required(login_url="log_reg:sign_in")
+def client_profile(request):
+    user_orders = request.user.client_info.orders.all()
+    return render(request, "client-profile.html", {'title': "Профиль", "user_orders": user_orders, "order_field_titles": Order.get_profile_order_list_titles()})
+
+@login_required(login_url="log_reg:sign_in")
+def edit_profile(request):
+    # доделать хуйню эту
+    form = ClientEditForm(initial={ 'full_name': 1, 'phone_number': 1})
+    return render(request, "client-profile.html", {'title': "Изменение профиля"})

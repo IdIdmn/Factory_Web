@@ -1,0 +1,66 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="nav-bar">
+    <a href="{% url 'main:home_page' %}" class="factory-logo-pointer">
+        <img src="{% static 'clients_interface/Files/factory_logo_1.png' %}" class="factory-logo-pointer-image">
+    </a>
+    <div class="nav-empty-space"></div>
+</header>
+<section class="content">
+    <p class="profile-title"><b>Данные о клиенте:</b></p>
+    <div class="profile-info-container">
+        <div class="profile-titles-container">
+            <p class="profile-text">Имя пользователя:</p>
+            <p class="profile-text">Адрес электронной почты:</p>
+            <p class="profile-text">ФИО:</p>
+            <p class="profile-text">Номер телефона:</p>
+        </div>
+        <div class="profile-values-container">
+            <p class="profile-text">{{ user.username }}</p>
+            <p class="profile-text">{{ user.client_info.email }}</p>
+            <p class="profile-text">{{ user.client_info.full_name }}</p>
+            <p class="profile-text">{{ user.client_info.phone_number }}</p>
+        </div>
+    </div>
+    <a href="{% url 'main:client_profile' %}" class="profile-button edit-button">Редактировать</a>
+    <a href="{% url 'log_reg:logout' %}" class="profile-button logout-button">Выйти</a>
+    <p class="profile-title order-history-title"><b>История заказов:</b></p>
+    {% if user_orders %}
+        <table>
+            <tr>
+                {% for column_title in order_field_titles %}
+                    {% if forloop.counter == 1 %}
+                        <th class="first-cell">{{column_title}}</th>
+                    {% else %}
+                        <th>{{column_title}}</th>
+                    {% endif %}
+                {% endfor %}
+            </tr>
+            {% for order in user_orders %}
+                <tr>
+                    {% for field in order.profile_order_list %}
+                        {% if forloop.counter == 1 %}
+                            <td class="first-cell">{% include 'components/table-cell.html' %}</td>
+                        {% else %}
+                            <td>{% include 'components/table-cell.html' %}</td>
+                        {% endif %}
+                    {% endfor%}
+                    <td>
+                        {% if field %}
+                            <a href="{{order.files.url}}" download>Файл проекта</a> 
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor%}
+        </table>
+    {% else %}
+    <p>Вы ещё не оформляли заказов</p>
+    {% endif %}    
+</section>
+<footer>
+    <div class="footer-text">© Все права защищены</div>
+    <div class="footer-text">Адрес: 111033, Москва, ул. Волочаевская, д. 5, корпус 1.</div>
+</footer>
+{% endblock %}

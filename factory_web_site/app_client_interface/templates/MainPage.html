@@ -2,11 +2,22 @@
 {% load static %}
 
 {% block content %}
-{% include 'components/clients-part-header.html' %}
-<div id="profile-menu">
-    <div id="profile-menu-option">Профиль</div>
-    <div id="profile-menu-option">Выйти</div>
-</div>
+<header class="nav-bar">
+    <img src="{% static 'clients_interface/Files/factory_logo_1.png' %}" class="factory-logo">
+    <div class="nav-empty-space"></div>
+    <div id="nav-connect-btn">
+        <b>Сделать заказ</b>
+    </div>
+    {% if user.is_authenticated %}
+    <a href="{% url 'main:client_profile' %}" class="profile-image-pointer">
+        <img src="{% static 'clients_interface/Files/profile_icon.png' %}" class="profile-image">
+    </a>
+    {% else %}
+    <a href="{% url 'log_reg:sign_in' %}" class="nav-logIn-image-pointer">
+        <img src="{% static 'clients_interface/Files/log_in.png' %}" class="nav-logIn-image">
+    </a>
+    {% endif %}
+</header>
 <section class="introduction">
     <img src="{% static 'clients_interface/Files/main_page_back.png' %}" class="background-img">
     <div>

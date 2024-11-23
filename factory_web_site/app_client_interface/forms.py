@@ -1,7 +1,8 @@
+from pydoc import cli
 import re
 from django import forms
 from django.forms import ValidationError
-from .models import Order
+from .models import Order, Client
 
 class OrderForm(forms.ModelForm):
     CHOICES = (
@@ -16,7 +17,7 @@ class OrderForm(forms.ModelForm):
 
     class Meta():
         model = Order
-        fields = ['email', 'description', "order_type", "files"]
+        fields = ['description', "order_type", "files"]
 
     def __init__(self, *args, **kwargs):
         current_user = kwargs.pop('user', None)
@@ -46,4 +47,51 @@ class OrderForm(forms.ModelForm):
             raise ValidationError('Файл должен быть архивом.')
         return files
 
+    def save(self, commit=True):
+        order = super().save(commit=False)
+        if commit:
+            client, created = Client.objects.get_or_create(email=self.cleaned_data.get("email"))
+            order.client = client
+            order.save()
+        return order
         
+
+class ClientEditForm(forms.ModelForm):
+    full_name = forms.CharField(label="ФИО")
+    phone_number = forms.CharField(label="Номер телефона")
+
+    class Meta:
+        model = Client
+        fields = ["full_name", "phone_number"]
+
+    def __init__(self, *args, **kwargs):
+        self.email = kwargs.pop('email', None)
+        super().__init__(*args, **kwargs)
+        self.fields['full_name'].widget.attrs.update({'class': 'input-field'})
+        self.fields['phone_number'].widget.attrs.update({'class': 'input-field'})
+
+    def clean_full_name(self):
+        full_name = self.cleaned_data.get('full_name')
+        if not re.match(r"[A-Za-zа-яА-ЯёЁ]+ [A-Za-zа-яА-ЯёЁ]+ [A-Za-zа-яА-ЯёЁ]+$", full_name):
+            raise ValidationError("Введите ФИО корректно")
+        return full_name
+    
+    def clean_phone_number(self):
+        phone_template = r"[78]? ?\(?\d{3}\)? ?\d{3}-?\d{2}-?\d{2}$"
+        phone_template1 = r"[78]?-?\d{3}-?\d{3}-?\d{2}-?\d{2}$"
+        phone_template2 = r"\+?7? ?\(?\d{3}\)? ?\d{3}-?\d{2}-?\d{2}$"
+        phone_template3 = r"\+?7?-?\d{3}-?\d{3}-?\d{2}-?\d{2}$"
+        phone_number = self.cleaned_data.get("phone_number")
+        is_phone_number_valid = bool(re.match(phone_template, phone_number)) or bool(re.match(phone_template1, phone_number)) or\
+              bool(re.match(phone_template2, phone_number)) or bool(re.match(phone_template3, phone_number))
+        if not is_phone_number_valid:
+            raise ValidationError("Некорректный номер телефона")
+        return phone_number
+
+    def save(self, commit=True):
+        client = Client.objects.get(email=self.email)
+        if commit:
+            client.full_name = self.cleaned_data.get("full_name")
+            client.phone_number = self.cleaned_data.get("phone_number")
+            client.save()
+        return client

@@ -1,0 +1,34 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="nav-bar">
+    <a href="{% url 'main:home_page' %}" class="factory-logo-pointer">
+        <img src="{% static 'clients_interface/Files/factory_logo_1.png' %}" class="factory-logo-pointer-image">
+    </a>
+    <div class="nav-empty-space"></div>
+</header>
+<section class="content">
+    <p class="profile-title"><b>Данные о клиенте:</b></p>
+    <div class="profile-info-container">
+        <div class="profile-titles-container">
+            <p class="profile-text">Имя пользователя:</p>
+            <p class="profile-text">Адрес электронной почты:</p>
+            <p class="profile-text">ФИО:</p>
+            <p class="profile-text">Номер телефона:</p>
+        </div>
+        <div class="profile-values-container">
+            <p class="profile-text">{{ user.username }}</p>
+            <p class="profile-text">{{ user.client_info.email }}</p>
+            <div> {{form.full_name}} </div>
+            <div> {{form.phone_number}} </div>
+        {% else %}
+        </div>
+    </div>
+    <button type="submit" class="send-info-btn">Отправить</button>
+</section>
+<footer>
+    <div class="footer-text">© Все права защищены</div>
+    <div class="footer-text">Адрес: 111033, Москва, ул. Волочаевская, д. 5, корпус 1.</div>
+</footer>
+{% endblock %}

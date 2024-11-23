@@ -8,6 +8,8 @@ def sign_up(request):
         form = SignUpForm(request.POST)
         if form.is_valid():
             form.save()
+            user = authenticate(request, **form.cleaned_data)
+            login(request, user)
             return redirect(reverse("main:home_page"))
     else:
         form = SignUpForm()
