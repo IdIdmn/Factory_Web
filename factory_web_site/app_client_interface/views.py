@@ -82,7 +82,7 @@ def client_profile(request):
                 user_orders = user_orders.find_by_date(datetime.datetime.strptime(date, "%d.%m.%Y"))
             if cost_interval_borders is not None:
                 cost_interval_borders = cost_interval_borders.split(", ")
-                user_orders = user_orders._by_cost_interval(int(cost_interval_borders[0]), int(cost_interval_borders[1]))
+                user_orders = user_orders.find_by_cost_interval(int(cost_interval_borders[0]), int(cost_interval_borders[1]))
             if user_orders.count() == 0:
                 empty_table_phrase = "Нет заказов, удовлетворяющих заданным условиям."
         # если есть что сортировать - сортируем
