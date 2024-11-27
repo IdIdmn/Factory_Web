@@ -26,13 +26,14 @@
                 <div class="profile-text last-line">{{form.phone_number}}</div>
             </div>
         </div>
-        <button type="submit" class="send-info-btn">Отправить</button>
-    </form>
-    {% if form.errors %}
-        {% for field in form %}
-            <p id="form-error">{{ field.errors.0 }}</p>
-        {% endfor %}
-    {% endif %}
+        <button type="submit" class="send-info-btn">Сохранить</button>
+        {% if form.errors %}
+            {% for field in form %}
+                {% if field.errors %}
+                    <p id="form-error">{{ field.errors.0 }}</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
 </section>
 <footer>
     <div class="footer-text">© Все права защищены</div>

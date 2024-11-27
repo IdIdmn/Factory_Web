@@ -1,0 +1,43 @@
+{% extends 'layouts/base.html' %}
+{% load static %}
+
+{% block content %}
+<header class="nav-bar">
+    <div class="nav-empty-space"></div>
+</header>
+<section class="content">
+    {% if table %}
+        <table id="table">
+            <tr>
+                {% for column_title in user_orders.get_profile_order_list_titles %}
+                    {% with model_field_titles|dict:column_title as model_field_title %}
+                        {% if forloop.counter == 1 %}
+                            <th class="first-cell"><a class="column-sort-link" href="{% url 'main:sort_by' model_field_title sort_direction %}{{current_params}}">{{column_title}}</a></th>
+                        {% else %}
+                            <th><a class="column-sort-link" href="{% url 'main:sort_by' model_field_title sort_direction %}{{current_params}}">{{column_title}}</a></th>
+                        {% endif %}
+                    {% endwith %}
+                {% endfor %}
+            </tr>
+            {% for row in table %}
+                <tr>
+                    {% for field in row.fields_values %}
+                        {% if forloop.counter == 1 %}
+                            <td class="first-cell">{% include 'components/table-cell.html' %}</td>
+                        {% else %}
+                            <td>{% include 'components/table-cell.html' %}</td>
+                        {% endif %}
+                    {% endfor%}
+                    <td>
+                        {% if order.files %}
+                            <a href="{{order.files.url}}" download>{{order.filename}}</a> 
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor%}
+        </table>
+    {% else %}
+    <p>{{empty_table_phrase}}</p>
+    {% endif %}    
+</section>
+{% endblock %}

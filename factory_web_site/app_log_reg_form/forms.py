@@ -2,6 +2,7 @@ import re
 from django import forms
 from django.contrib.auth.models import User, Group
 from django.forms import ValidationError
+from django.db.models import Q
 from app_client_interface.models import Client
 
 
@@ -56,6 +57,8 @@ class SignUpForm(forms.ModelForm):
         email = self.cleaned_data.get("email")
         if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
             raise ValidationError("Некорректный почтовый адрес")
+        if Client.objects.filter(Q(email=email) & Q(full_name__isnull=False)).count():
+            raise ValidationError("Почта уже занята")
         return email
     
     def clean_phone_number(self):

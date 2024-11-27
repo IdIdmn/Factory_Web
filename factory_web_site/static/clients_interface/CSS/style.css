@@ -42,7 +42,7 @@ body{
 }
 
 #nav-connect-btn{
-    height: 40%;
+    height: 42%;
     width: 15%;
     text-align: center;
     font-size: 20px;
@@ -61,7 +61,7 @@ body{
 }
 
 .profile-image-pointer{
-    height: 42%;
+    height: 44%;
     border-radius: 25px;
     margin-left: 20px;
     user-select: none;
@@ -81,7 +81,7 @@ body{
 }
 
 .nav-logIn-image-pointer{
-    height: 40%;
+    height: 42%;
     border-radius: 10px;
     margin-left: 20px;
     user-select: none;
@@ -200,7 +200,7 @@ ul li{
 }
 
 .input-field{
-    margin-top: 10px
+    margin-top: 10px; 
 }
 
 .order-email-field{
@@ -248,7 +248,7 @@ ul li{
 .content .profile-title {
     color: black;
     line-height: normal;
-    margin-bottom: 15px;
+    margin-bottom: 0px;
     font-size: 30px;
 }
 
@@ -298,7 +298,7 @@ ul li{
 
 .logout-button{
     display: inline-block;
-    margin-left: 40px;
+    margin-left: 35px;
     border-color: #cd4343;
     color: #cd4343;
     width: 110px;
@@ -321,8 +321,13 @@ a:hover{
     color:red;
 }
 
+.overall-table-info{
+    margin-top: 20px;
+    font-size: 17px;
+}
+
 table {
-    margin-top: 30px;
+    margin-top: 10px;
     margin-bottom: 40px;
     background: #fefefe;
     border:1px solid #d3d3d3;
@@ -343,10 +348,11 @@ th {
     text-shadow: 1px 1px 1px #fff;
     background: #ededed;
     font-size: 20px;
+    cursor: pointer;
 }
 
-td {border-top:1px solid #e0e0e0; 
-    border-right:1px solid #e0e0e0;
+td {border-top:1px solid #d8d8d8; 
+    border-right:1px solid #d8d8d8;
     background: #fefefe;
     font-size: 17px;
 }
@@ -365,6 +371,59 @@ td {border-top:1px solid #e0e0e0;
 
 .first-line{
     margin-top: 0px;
+}
+
+.column-sort-link{
+    color: black;
+}
+
+.column-sort-link:hover{
+    color: black;
+}
+
+.search-input{
+    display: inline-block;
+}
+
+#text-input{
+    display: inline-block;
+}
+
+#interval-end-input, #interval-start-input{
+    display: none;
+}
+
+.search-input-field{
+    height: 19.5px;
+    min-width: 171px;
+}
+
+.search-input-selector{
+    height: 24px;
+}
+
+.search-confirm-button {
+    height: 25px;
+    width: 65px;
+    margin-left: 6px;
+}
+
+.reset-search-button {
+    display: inline-flex;
+    color: black;
+    border: solid 1px #6f6d6d;
+    border-radius: 2px;
+    height: 23px;
+    align-items: center;
+    justify-content: center;
+    width: 75px;
+    background-color: #f0f0f0;
+    margin-left: 7px;
+}
+
+.reset-search-button:hover{
+    background-color: #e0e0e0;
+    color: black;
 }
 
 footer{

@@ -1,5 +1,6 @@
 {% extends 'layouts/base.html' %}
 {% load static %}
+{% load custom_tags %}
 
 {% block content %}
 <header class="nav-bar">
@@ -27,15 +28,36 @@
     <a href="{% url 'main:edit_profile' %}" class="profile-button edit-button">Редактировать</a>
     <a href="{% url 'log_reg:logout' %}" class="profile-button logout-button">Выйти</a>
     <p class="profile-title order-history-title"><b>История заказов:</b></p>
+    <div class="search-section">
+        <form method="post" id="search-form">
+            {% csrf_token %}
+            <div class="overall-table-info search-input">Поиск по {{form.search_column}}:</div> 
+            {{form.common_text}}
+            {{form.interval_start}}
+            {{form.interval_end}}
+            <button type="submit" class="search-confirm-button">Искать</button>
+            <a href="{% url 'main:reset_profile' %}" class="reset-search-button">Сбросить</a>
+        </form>
+        {% if form.errors %}
+            {% for field in form %}
+                {% if field.errors %}
+                    <p id="form-error">{{ field.errors.0 }}</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
     {% if user_orders %}
-        <table>
+        <div class="overall-table-info">Всего {{ user_orders.count }} заказа(-ов/ ) на общую сумму {{total_spendings}} рублей.</div>
+        <table id="orders_table">
             <tr>
-                {% for column_title in order_field_titles %}
-                    {% if forloop.counter == 1 %}
-                        <th class="first-cell">{{column_title}}</th>
-                    {% else %}
-                        <th>{{column_title}}</th>
-                    {% endif %}
+                {% for column_title in table_column_titles %}
+                    {% with model_field_titles|dict:column_title as model_field_title %}
+                        {% if forloop.counter == 1 %}
+                            <th class="first-cell"><a class="column-sort-link" href="{% url 'main:sort_by' model_field_title sort_direction %}{{current_params}}">{{column_title}}</a></th>
+                        {% else %}
+                            <th><a class="column-sort-link" href="{% url 'main:sort_by' model_field_title sort_direction %}{{current_params}}">{{column_title}}</a></th>
+                        {% endif %}
+                    {% endwith %}
                 {% endfor %}
             </tr>
             {% for order in user_orders %}
@@ -49,14 +71,14 @@
                     {% endfor%}
                     <td>
                         {% if order.files %}
-                            <a href="{{order.files.url}}" download>Файл проекта</a> 
+                            <a href="{{order.files.url}}" download>{{order.filename}}</a> 
                         {% endif %}
                     </td>
                 </tr>
             {% endfor%}
         </table>
     {% else %}
-    <p>Вы ещё не оформляли заказов</p>
+    <p>{{empty_table_phrase}}</p>
     {% endif %}    
 </section>
 <footer>

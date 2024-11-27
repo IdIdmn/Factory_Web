@@ -38,7 +38,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'app_client_interface',
-    'app_log_reg_form'
+    'app_log_reg_form',
+    'app_employee_interface'
 ]
 
 MIDDLEWARE = [
@@ -81,7 +82,7 @@ DATABASES = {
         'NAME': 'Factory_Web',
         'USER': 'postgres',
         'PASSWORD': 'pass',
-        'HOST': 'localhost',
+        'HOST': '127.0.0.1',
         'PORT': '5432',
     }
 }

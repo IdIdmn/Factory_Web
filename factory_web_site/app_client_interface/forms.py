@@ -2,6 +2,7 @@ from pydoc import cli
 import re
 from django import forms
 from django.forms import ValidationError
+from django.db.models import Q
 from .models import Order, Client
 
 class OrderForm(forms.ModelForm):
@@ -67,7 +68,6 @@ class ClientEditForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.email = kwargs.pop('email', None)
-        print(self.email)
         super().__init__(*args, **kwargs)
         self.fields['email'].widget.attrs.update({'class': 'short-text-field input-field'})
         self.fields['full_name'].widget.attrs.update({'class': 'short-text-field input-field'})
@@ -77,6 +77,8 @@ class ClientEditForm(forms.ModelForm):
         email = self.cleaned_data.get("email")
         if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
             raise ValidationError("Некорректный почтовый адрес")
+        if Client.objects.filter(Q(email=email) & Q(full_name__isnull=False)).count() and email != self.email:
+            raise ValidationError("Почта уже занята")
         return email
 
     def clean_full_name(self):
@@ -100,8 +102,85 @@ class ClientEditForm(forms.ModelForm):
     def save(self, commit=True):
         client = Client.objects.get(email=self.email)
         if commit:
-            client.email = self.cleaned_data.get("email")
-            client.full_name = self.cleaned_data.get("full_name")
-            client.phone_number = self.cleaned_data.get("phone_number")
-            client.save()
+            try:
+                new_client = Client.objects.get(email = self.cleaned_data.get("email"))
+                new_client.user = client.user
+                client.user = None
+                client.full_name = None
+                client.phone_number = None           
+                client.save()
+                new_client.full_name = self.cleaned_data.get("full_name")
+                new_client.phone_number = self.cleaned_data.get("phone_number")
+                new_client.save()
+            except Client.DoesNotExist:
+                client.email = self.cleaned_data.get("email")
+                client.full_name = self.cleaned_data.get("full_name")
+                client.phone_number = self.cleaned_data.get("phone_number")
+                client.save()
         return client
+
+
+class OrderSearchForm(forms.Form):
+    CHOICES = (
+    ("order_type", "типу услуги"),
+    ("cost", "цене"),
+    ("date", "дате"),
+    ("date_interval", "временному промежутку")
+    )
+    search_column = forms.ChoiceField(choices=CHOICES)
+    common_text = forms.CharField(required=False)
+    interval_start = forms.CharField(required=False)
+    interval_end = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field', "placeholder" : "ремонт"})
+        self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
+        self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
+
+    def clean_common_text(self):
+        search_column = self.cleaned_data.get("search_column")
+        value = self.cleaned_data.get("common_text")
+        if value is not None and value:
+            if search_column == "order_type":
+                if not re.match(r"[ а-яА-ЯёЁ]+$", value):
+                    raise ValidationError("Некорректно введён тип услуг.")
+            elif search_column == "date":
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value):
+                    raise ValidationError("Дата введена некорректно.")
+        return value
+    
+    def clean_interval_start(self):
+        search_column = self.cleaned_data.get("search_column")
+        start_value = self.cleaned_data.get("interval_start")
+        if search_column == "cost":
+            if start_value is not None and start_value:
+                if not re.match(r"\d+$" , start_value):
+                    raise ValidationError("Начальная сумма введена некорректно.")
+            else:
+                start_value = "0"
+        elif search_column == "date_interval":
+            if start_value is not None and start_value:
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value):
+                    raise ValidationError("Начальная дата введена некорректно.")
+            else:
+                start_value = "00.00.0001"
+        return start_value
+    
+    def clean_interval_end(self):
+        search_column = self.cleaned_data.get("search_column")
+        end_value = self.cleaned_data.get("interval_end")
+        if search_column == "cost":
+            if end_value is not None and end_value:
+                if not re.match(r"\d+$" , end_value):
+                    raise ValidationError("Конечная сумма введена некорректно.")
+            else:
+                end_value = "2147483646"
+        elif search_column == "date_interval":
+            if end_value is not None and end_value:
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value):
+                    raise ValidationError("Конечная дата введена некорректно.")
+            else:
+                end_value = "30.12.9999"
+        return end_value
