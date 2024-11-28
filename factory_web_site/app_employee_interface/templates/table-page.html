@@ -9,67 +9,78 @@
     <div class="nav-empty-space"></div>
 </header>
 <section class="content">
-    <div class="search-section">
-        <form method="post" id="search-form">
-            {% csrf_token %}
-            <div class="overall-table-info search-input">Поиск по {{form.search_column}}:</div> 
-            {{form.common_text}}
-            {{form.interval_start}}
-            {{form.interval_end}}
-            <button type="submit" class="search-confirm-button">Искать</button>
-            <a href="{% url 'employee:reset_table' %}{{request_params}}" class="reset-button">Сбросить</a>
-        </form>
-        {% if form.errors %}
-            {% for field in form %}
-                {% if field.errors %}
-                    <p id="form-error">{{ field.errors.0 }}</p>
-                {% endif %}
-            {% endfor %}
-        {% endif %}
-    </div>
-    {% if model %}
-        <table id="table">
-            <thead>
-                <tr>
-                    {% for column_title in table_column_titles %}
-                        {% with model_field_titles|dict:column_title as model_field_title %}
-                            {% if forloop.counter == 1 %}
-                                <th class="first-cell"><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
-                            {% else %}
-                                <th><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
-                            {% endif %}
-                        {% endwith %}
-                    {% endfor %}
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in model %}
-                    <tr id="table-row-{{forloop.counter}}">
-                        {% for field in item.fields_values %}
-                            {% if forloop.counter == 1 %}
-                                <td class="first-cell">{% include 'components/table-cell.html' %}</td>
-                            {% elif forloop.last %} 
-                                <td class="pre-last-cell">
-                                    {% if title == "Список заказов" %}
-                                        {% if field %}
-                                            <a href="{{field.url}}" download>{{item.filename}}</a> 
-                                        {% endif %}
-                                    {% else %}
-                                        {% include 'components/table-cell.html' %}
-                                    {% endif %}
-                                </td>
-                            {% else %}
-                                <td>{% include 'components/table-cell.html' %}</td>
-                            {% endif %}
-                        {% endfor%}
-                        <td class="last-cell"><a id="edit-button-{{forloop.counter}}" class="small-button last-cell">Изменить</a></td>
+    <div>
+        <div class="search-section">
+            <form method="post" id="search-form">
+                {% csrf_token %}
+                <div class="overall-table-info search-input">Поиск по {{search_form.search_column}}:</div> 
+                {{search_form.common_text}}
+                {{search_form.interval_start}}
+                {{search_form.interval_end}}
+                <button type="submit" class="search-confirm-button">Искать</button>
+                <a href="{% url 'employee:reset_table' %}{{request_params}}" class="reset-button">Сбросить</a>
+            </form>
+            {% if search_form.errors %}
+                {% for field in search_form %}
+                    {% if field.errors %}
+                        <p id="form-error">{{ field.errors.0 }}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% if model %}
+            <table id="table">
+                <thead>
+                    <tr>
+                        {% for column_title in table_column_titles %}
+                            {% with model_field_titles|dict:column_title as model_field_title %}
+                                {% if forloop.counter == 1 %}
+                                    <th class="first-cell"><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                                {% else %}
+                                    <th><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                                {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                        <th></th>
                     </tr>
-                {% endfor%}
-            </tbody>
-        </table>
-    {% else %}
-    <p>{{empty_table_phrase}}</p>
-    {% endif %}    
+                </thead>
+                <tbody>
+                    {% for item in model %}
+                        <tr id="table-row-{{forloop.counter}}">
+                            {% for field in item.fields_values %}
+                                {% if forloop.counter == 1 %}
+                                    <td class="first-cell">{% include 'components/table-cell.html' %}</td>
+                                {% elif forloop.last %} 
+                                    <td class="pre-last-cell">
+                                        {% if title == "Список заказов" %}
+                                            {% if field %}
+                                                <a href="{{field.url}}" download>{{item.filename}}</a> 
+                                            {% endif %}
+                                        {% else %}
+                                            {% include 'components/table-cell.html' %}
+                                        {% endif %}
+                                    </td>
+                                {% else %}
+                                    <td>{% include 'components/table-cell.html' %}</td>
+                                {% endif %}
+                            {% endfor%}
+                            <td class="last-cell">
+                                <div id="row-buttons-{{forloop.counter}}" class="row-buttons-container">
+                                    <a class="small-button">
+                                        <img src="{% static 'employee_interface/Files/edit-icon.png' %}">
+                                    </a>
+                                    <a class="small-button" id="remove-button" href="{% url 'employee:delete_item' model_name item.id forloop.counter %}{{request_params}}">
+                                        <img src="{% static 'employee_interface/Files/remove-icon.png' %}">
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor%}
+                </tbody>
+            </table>
+        {% else %}
+        <p>{{empty_table_phrase}}</p>
+        {% endif %}
+    </div>    
 </section>
 {% endblock %}

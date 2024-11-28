@@ -72,16 +72,28 @@ class OrderSearchForm(forms.Form):
         return end_value
     
 
-class OrderEditForm(forms.ModelForm):
+class OrderCreateEditForm(forms.ModelForm):
     CHOICES = (
     ("Ремонт", "Ремонт"),
     ("Создание детали по чертежам", "Создание детали по чертежам"),
     ("Создание детали с нуля", "Создание детали с нуля")
     )
-    cost = forms.IntegerField(required=False)
-    order_type = forms.ChoiceField(choices=CHOICES)
+    email = forms.CharField()
+    description = forms.CharField(widget=forms.Textarea, required=False)
+    order_type = forms.ChoiceField( choices=CHOICES)
+    cost = forms.CharField()
+    files = forms.FileField(required=False)
 
 
-class DeleteItemForm(forms.Form):
-    pass
+
+
+
+# class MultipleDeleteForm(forms.Form):
+    
+#     def __init__(self, *args, **kwargs): 
+#         options = kwargs.pop('options', []) 
+#         super(MultipleDeleteForm, self).__init__(*args, **kwargs)
+#         for option in options:
+#             self.fields[option] = forms.BooleanField(required=False)
+#             self.fields[option].widget.attrs.update({'class': 'delete-checkbox'})
 

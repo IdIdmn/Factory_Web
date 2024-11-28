@@ -39,6 +39,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("interval-end-input").setAttribute("placeholder", "конечная дата (дд.мм.гггг)")
             } else if (search_options.value == "date"){
                 document.getElementById("text-input").setAttribute("placeholder", "дд.мм.гггг")
+            } else if (search_options.value == "email"){
+                document.getElementById("text-input").setAttribute("placeholder", "example@mail.ru")
             }
         }
 
@@ -54,20 +56,16 @@ document.addEventListener("DOMContentLoaded", function () {
     while (row !== null) {
         let current_id = i
         let current_row = row
-        console.log(`Processing row ${i}`);
-        console.log(`${row !== null}`);
         current_row.addEventListener('mouseenter',  function() {
-            console.log(`Mouse entered row ${current_id}`);
-            let editButton = document.getElementById(`edit-button-${current_id}`);
-            if (editButton) {
-                console.log(`Edit-button-${current_id} exists`);
-                editButton.style.display = "inline-flex"; 
+            let row_buttons_container = document.getElementById(`row-buttons-${current_id}`);
+            if (row_buttons_container) {
+                row_buttons_container.style.display = "block"; 
             }
         });
         current_row.addEventListener('mouseleave',  function() {
-            let editButton = document.getElementById(`edit-button-${current_id}`);
-            if (editButton) {
-                editButton.style.display = "none"; 
+            let row_buttons_container = document.getElementById(`row-buttons-${current_id}`);
+            if (row_buttons_container) {
+                row_buttons_container.style.display = "none"; 
             }
         });
         i++;
