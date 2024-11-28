@@ -77,7 +77,7 @@ def client_profile(request):
                 date_interval_borders = date_interval_borders.split(", ")
                 user_orders = user_orders.find_by_date_interval(datetime.datetime.strptime(date_interval_borders[0], "%d.%m.%Y"), datetime.datetime.strptime(date_interval_borders[1], "%d.%m.%Y"))
             if order_type is not None and order_type:
-                user_orders = user_orders.find_by_order_type(order_type, can_include = True)
+                user_orders = user_orders.find_by_order_type(order_type, include = True)
             if date is not None and date:
                 user_orders = user_orders.find_by_date(datetime.datetime.strptime(date, "%d.%m.%Y"))
             if cost_interval_borders is not None:

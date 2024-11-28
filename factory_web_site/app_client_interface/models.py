@@ -9,6 +9,9 @@ class Client(models.Model):
     full_name = models.CharField(max_length=100, blank=True,null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
+    class Meta:
+        ordering = ["email"]
+
 class Order(models.Model):
     client = models.ForeignKey(Client, related_name="orders", on_delete=models.CASCADE, null=True)
     description = models.TextField(null = True, blank = True)
@@ -25,7 +28,7 @@ class Order(models.Model):
 
     @staticmethod
     def get_fields_titles_ru_en_dict():
-        return {"Тип заказа": "order_type", "Комментарий": "description", "Дата": "date", "Цена, руб.": "cost", "Файл проекта": "files"}
+        return {"Почта клиента": "client" ,"Тип заказа": "order_type", "Комментарий": "description", "Дата": "date", "Цена, руб.": "cost", "Файл проекта": "files"}
 
     @staticmethod 
     def get_profile_order_list_titles():
@@ -41,4 +44,4 @@ class Order(models.Model):
 
     @property
     def fields_values(self):
-        return [self.client.email, self.description, self.order_type, self.date, self.cost]
+        return [self.client.email, self.description, self.order_type, self.date, self.cost, self.files]

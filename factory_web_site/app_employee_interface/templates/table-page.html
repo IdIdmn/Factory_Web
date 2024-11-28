@@ -1,40 +1,72 @@
-{% extends 'layouts/base.html' %}
+{% extends 'layouts/employee-base.html' %}
 {% load static %}
+{% load custom_tags %}
 
 {% block content %}
 <header class="nav-bar">
     <div class="nav-empty-space"></div>
+    <div class="title-container"><h1>{{title}}</h1></div>
+    <div class="nav-empty-space"></div>
 </header>
 <section class="content">
-    {% if table %}
+    <div class="search-section">
+        <form method="post" id="search-form">
+            {% csrf_token %}
+            <div class="overall-table-info search-input">Поиск по {{form.search_column}}:</div> 
+            {{form.common_text}}
+            {{form.interval_start}}
+            {{form.interval_end}}
+            <button type="submit" class="search-confirm-button">Искать</button>
+            <a href="{% url 'employee:reset_table' %}{{request_params}}" class="reset-button">Сбросить</a>
+        </form>
+        {% if form.errors %}
+            {% for field in form %}
+                {% if field.errors %}
+                    <p id="form-error">{{ field.errors.0 }}</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+    {% if model %}
         <table id="table">
-            <tr>
-                {% for column_title in user_orders.get_profile_order_list_titles %}
-                    {% with model_field_titles|dict:column_title as model_field_title %}
-                        {% if forloop.counter == 1 %}
-                            <th class="first-cell"><a class="column-sort-link" href="{% url 'main:sort_by' model_field_title sort_direction %}{{current_params}}">{{column_title}}</a></th>
-                        {% else %}
-                            <th><a class="column-sort-link" href="{% url 'main:sort_by' model_field_title sort_direction %}{{current_params}}">{{column_title}}</a></th>
-                        {% endif %}
-                    {% endwith %}
-                {% endfor %}
-            </tr>
-            {% for row in table %}
+            <thead>
                 <tr>
-                    {% for field in row.fields_values %}
-                        {% if forloop.counter == 1 %}
-                            <td class="first-cell">{% include 'components/table-cell.html' %}</td>
-                        {% else %}
-                            <td>{% include 'components/table-cell.html' %}</td>
-                        {% endif %}
-                    {% endfor%}
-                    <td>
-                        {% if order.files %}
-                            <a href="{{order.files.url}}" download>{{order.filename}}</a> 
-                        {% endif %}
-                    </td>
+                    {% for column_title in table_column_titles %}
+                        {% with model_field_titles|dict:column_title as model_field_title %}
+                            {% if forloop.counter == 1 %}
+                                <th class="first-cell"><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                            {% else %}
+                                <th><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                            {% endif %}
+                        {% endwith %}
+                    {% endfor %}
+                    <th></th>
                 </tr>
-            {% endfor%}
+            </thead>
+            <tbody>
+                {% for item in model %}
+                    <tr id="table-row-{{forloop.counter}}">
+                        {% for field in item.fields_values %}
+                            {% if forloop.counter == 1 %}
+                                <td class="first-cell">{% include 'components/table-cell.html' %}</td>
+                            {% elif forloop.last %} 
+                                <td class="pre-last-cell">
+                                    {% if title == "Список заказов" %}
+                                        {% if field %}
+                                            <a href="{{field.url}}" download>{{item.filename}}</a> 
+                                        {% endif %}
+                                    {% else %}
+                                        {% include 'components/table-cell.html' %}
+                                    {% endif %}
+                                </td>
+                            {% else %}
+                                <td>{% include 'components/table-cell.html' %}</td>
+                            {% endif %}
+                        {% endfor%}
+                        <td class="last-cell"><a id="edit-button-{{forloop.counter}}" class="small-button last-cell">Изменить</a></td>
+                    </tr>
+                {% endfor%}
+            </tbody>
         </table>
     {% else %}
     <p>{{empty_table_phrase}}</p>
