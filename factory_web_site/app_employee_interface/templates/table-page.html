@@ -4,22 +4,41 @@
 
 {% block content %}
 <header class="nav-bar">
-    <div class="nav-empty-space"></div>
+    <div class="empty-space"></div>
     <div class="title-container"><h1>{{title}}</h1></div>
-    <div class="nav-empty-space"></div>
+    <div class="empty-space"></div>
+    <img src="{% static 'employee_interface/Files/menu-icon.png' %}" id="nav-bar-menu-image">
 </header>
 <section class="content">
-    <div>
+    <div id="hidden-nav-menu">
+        {% if is_Superuser %}
+            {% include 'components/superuser-menu-options.html' %}
+        {% elif is_Manager %}
+            {% include 'components/manager-menu-options.html' %}
+        {% elif is_PurchaseDepartmentEmployee %}
+            {% include 'components/pd-menu-options.html' %}
+        {% elif is_Chief %}
+            {% include 'components/chief-menu-options.html' %}
+        {% endif %}
+        <a class="nav-menu-option last-option" href="{% url 'main:home_page' %}">На главную</a>
+    </div>
+    <div class="expanded_table_container">
         <div class="search-section">
-            <form method="post" id="search-form">
-                {% csrf_token %}
-                <div class="overall-table-info search-input">Поиск по {{search_form.search_column}}:</div> 
-                {{search_form.common_text}}
-                {{search_form.interval_start}}
-                {{search_form.interval_end}}
-                <button type="submit" class="search-confirm-button">Искать</button>
-                <a href="{% url 'employee:reset_table' %}{{request_params}}" class="reset-button">Сбросить</a>
-            </form>
+            <div class = "search-add-line">
+                <form method="post" id="search-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="overall-table-info search-input">Поиск {{search_form.search_column}}:</div> 
+                    {{search_form.common_text}}
+                    {{search_form.interval_start}}
+                    {{search_form.interval_end}}
+                    <button type="submit" class="search-confirm-button">Искать</button>
+                    <a href="{% url 'employee:reset_table' %}{{request_params}}" class="table-button button">Сбросить</a>
+                </form>
+                <div class="empty-space"></div>
+                {% if not title == "Список клиентов" and is_allowed_to_modify %}
+                    <a class="table-button button" href="{% url 'employee:create_item' model_name %}{{request_params}}">Создать</a>
+                {% endif %}
+            </div>  
             {% if search_form.errors %}
                 {% for field in search_form %}
                     {% if field.errors %}
@@ -27,6 +46,7 @@
                     {% endif %}
                 {% endfor %}
             {% endif %}
+            
         </div>
         {% if model %}
             <table id="table">
@@ -35,9 +55,9 @@
                         {% for column_title in table_column_titles %}
                             {% with model_field_titles|dict:column_title as model_field_title %}
                                 {% if forloop.counter == 1 %}
-                                    <th class="first-cell"><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                                    <th class="first-cell"><a class="column-sort-link" href="{% url 'employee:sort_by' model_name model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
                                 {% else %}
-                                    <th><a class="column-sort-link" href="{% url 'employee:sort_by' model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                                    <th><a class="column-sort-link" href="{% url 'employee:sort_by' model_name model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
                                 {% endif %}
                             {% endwith %}
                         {% endfor %}
@@ -52,7 +72,7 @@
                                     <td class="first-cell">{% include 'components/table-cell.html' %}</td>
                                 {% elif forloop.last %} 
                                     <td class="pre-last-cell">
-                                        {% if title == "Список заказов" %}
+                                        {% if title == "Журнал заказов" %}
                                             {% if field %}
                                                 <a href="{{field.url}}" download>{{item.filename}}</a> 
                                             {% endif %}
@@ -65,14 +85,16 @@
                                 {% endif %}
                             {% endfor%}
                             <td class="last-cell">
-                                <div id="row-buttons-{{forloop.counter}}" class="row-buttons-container">
-                                    <a class="small-button">
-                                        <img src="{% static 'employee_interface/Files/edit-icon.png' %}">
-                                    </a>
-                                    <a class="small-button" id="remove-button" href="{% url 'employee:delete_item' model_name item.id forloop.counter %}{{request_params}}">
-                                        <img src="{% static 'employee_interface/Files/remove-icon.png' %}">
-                                    </a>
-                                </div>
+                                {% if is_allowed_to_modify %}
+                                    <div id="row-buttons-{{forloop.counter}}" class="row-buttons-container">
+                                        <a class="small-button" href="{% url 'employee:edit_item' model_name item.id forloop.counter %}{{request_params}}">
+                                            <img src="{% static 'employee_interface/Files/edit-icon.png' %}">
+                                        </a>
+                                        <a class="small-button" id="remove-button" href="{% url 'employee:delete_item' model_name item.id forloop.counter %}{{request_params}}">
+                                            <img src="{% static 'employee_interface/Files/remove-icon.png' %}">
+                                        </a>
+                                    </div>
+                                {% endif %}
                             </td>
                         </tr>
                     {% endfor%}

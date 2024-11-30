@@ -5,6 +5,10 @@ from django.forms import ValidationError
 from django.db.models import Q
 from .models import Order, Client
 
+def is_Client(user):
+    return user.groups.filter(name='Client').exists()
+
+
 class OrderForm(forms.ModelForm):
     CHOICES = (
     ("Ремонт", "Ремонт"),
@@ -28,7 +32,7 @@ class OrderForm(forms.ModelForm):
         self.fields['description'].widget.attrs.update({'class': 'textarea-order-field input-field'})
         self.fields['order_type'].widget.attrs.update({'class': 'order-type-field input-field'})
         self.fields['files'].widget.attrs.update({'class': 'fileinput-order-field input-field'})
-        if current_user is not None and current_user.is_authenticated and current_user.client_info is not None:
+        if current_user is not None and current_user.is_authenticated and is_Client(current_user) and current_user.client_info is not None:
             self.fields['email'].initial = current_user.client_info.email
 
     def clean_email(self):
@@ -97,7 +101,7 @@ class ClientEditForm(forms.ModelForm):
               bool(re.match(phone_template2, phone_number)) or bool(re.match(phone_template3, phone_number))
         if not is_phone_number_valid:
             raise ValidationError("Некорректный номер телефона")
-        return phone_number
+        return "7" + re.sub(r"[\s\+\(\)\-]", "",phone_number)[1:]
 
     def save(self, commit=True):
         client = Client.objects.get(email=self.email)

@@ -4,6 +4,7 @@ from django.forms import model_to_dict
 from .models import *
 from .forms import *
 import datetime
+from django.db.models import Sum
 from urllib.parse import urlencode
 from django.contrib.auth.decorators import login_required
 
@@ -13,6 +14,26 @@ def change_direction(sort_direction):
         return "asc"
     else:
         return "desc"
+
+
+def is_Manager(user):
+    return user.groups.filter(name='Manager').exists()
+
+
+def is_PurchaseDepartmentEmployee(user):
+    return user.groups.filter(name='PurchaseDepartment').exists()
+
+
+def is_Chief(user):
+    return user.groups.filter(name='Chief').exists()
+
+
+def is_Client(user):
+    return user.groups.filter(name='Client').exists()
+
+
+def is_Employee(user):
+    return is_Manager(user) or is_Chief(user) or is_PurchaseDepartmentEmployee(user)
 
 
 def main_page(request):
@@ -29,11 +50,30 @@ def main_page(request):
     else:
         form_data = request.session.pop('form_data', None)
         file_name = request.session.pop('filename', None)
+        current_user = request.user
         if form_data is not None:
-            form = OrderForm(form_data, filename = file_name, user = request.user)
+            form = OrderForm(form_data, filename = file_name, user = current_user)
         else:
-            form = OrderForm(user = request.user)
-    return render(request, "MainPage.html", {'form': form, 'title': "МОЗ №1"})
+            form = OrderForm(user = current_user)
+        employee_url = ""
+        if is_Employee(current_user):
+            if is_Manager(current_user):
+                employee_url = reverse("employee:orders")
+            elif is_Chief(current_user):
+                employee_url = reverse("employee:staff")
+            elif is_PurchaseDepartmentEmployee(current_user):
+                employee_url = reverse("employee:vendors")
+        context = {
+            'form': form, 
+            'title': "МОЗ №1",
+            "is_employee": is_Employee(request.user), 
+            "is_client": is_Client(request.user),
+            "is_Manager": is_Manager(request.user),
+            "is_Chief": is_Chief(request.user),
+            "is_PurchaseDepartmentEmployee": is_PurchaseDepartmentEmployee(request.user),
+            "employee_url" : employee_url
+        }
+    return render(request, "MainPage.html", context)
 
 
 @login_required(login_url="log_reg:sign_in")
@@ -65,29 +105,16 @@ def client_profile(request):
         else:
             form = OrderSearchForm(form_data)
         search_params = request.GET.copy()
-        user_orders = request.user.client_info.orders.all()
+        user_orders = request.user.client_info.orders.all().order_by("id")
         # если есть что искать - ищем
         empty_table_phrase = "Вы ещё не оформляли заказов."
         if search_params:
-            order_type = search_params.get("order_type", None)
-            date = search_params.get("date", None)
-            date_interval_borders = search_params.get("date_interval", None)
-            cost_interval_borders = search_params.get("cost", None)
-            if date_interval_borders is not None:
-                date_interval_borders = date_interval_borders.split(", ")
-                user_orders = user_orders.find_by_date_interval(datetime.datetime.strptime(date_interval_borders[0], "%d.%m.%Y"), datetime.datetime.strptime(date_interval_borders[1], "%d.%m.%Y"))
-            if order_type is not None and order_type:
-                user_orders = user_orders.find_by_order_type(order_type, include = True)
-            if date is not None and date:
-                user_orders = user_orders.find_by_date(datetime.datetime.strptime(date, "%d.%m.%Y"))
-            if cost_interval_borders is not None:
-                cost_interval_borders = cost_interval_borders.split(", ")
-                user_orders = user_orders.find_by_cost_interval(int(cost_interval_borders[0]), int(cost_interval_borders[1]))
-            if user_orders.count() == 0:
-                empty_table_phrase = "Нет заказов, удовлетворяющих заданным условиям."
+            user_orders = user_orders.find(search_params)
+        if user_orders.count() == 0:
+            empty_table_phrase = "Нет заказов, удовлетворяющих заданным условиям."
         # если есть что сортировать - сортируем
         if sort_by_column is not None:
-            user_orders = user_orders.sort_orders(sort_by_column, sort_direction)
+            user_orders = user_orders.sort(sort_by_column, sort_direction)
         # считаем общие характеристики таблицы
         total_spendings = user_orders.filter(cost__isnull=False).aggregate(total=Sum('cost'))['total']
         if total_spendings is None:
@@ -97,14 +124,27 @@ def client_profile(request):
             current_params ="?" + urlencode(search_params)
         else:
             current_params = ""
-        return render(request, "client-profile.html", {'title': "Профиль", "current_params": current_params, "empty_table_phrase": empty_table_phrase, "form": form , 'total_spendings' : total_spendings, "user_orders": user_orders,
-        "sort_direction": change_direction(sort_direction) , 'model_field_titles': Order.get_fields_titles_ru_en_dict(), "table_column_titles": Order.get_profile_order_list_titles()})
+            context = {
+                'title': "Профиль", 
+                "current_params": current_params, 
+                "empty_table_phrase": empty_table_phrase, 
+                "form": form , 
+                'total_spendings' : total_spendings, 
+                "user_orders": user_orders,
+                "sort_direction": change_direction(sort_direction) , 
+                'model_field_titles': Order.get_fields_titles_ru_en_dict(), 
+                "table_column_titles": Order.get_profile_order_list_titles()
+            }
+        return render(request, "client-profile.html", context)
 
 
 @login_required(login_url="log_reg:sign_in")
 def sort_orders(request, sort_by_column, sort_direction):
+    if sort_direction == "desc" and request.session.pop('previous_sorted_column', None) != f"{sort_by_column}":
+        sort_direction = "asc"
     request.session['sort_by_column'] = sort_by_column
     request.session['sort_direction'] = sort_direction
+    request.session['previous_sorted_column'] = f"{sort_by_column}"
     request_params = request.GET.copy()
     return redirect(reverse("main:client_profile") + "?" + urlencode(request_params) + "#orders_table")
 

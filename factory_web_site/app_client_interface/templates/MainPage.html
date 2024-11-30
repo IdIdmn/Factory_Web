@@ -5,15 +5,24 @@
 <header class="nav-bar">
     <img src="{% static 'clients_interface/Files/factory_logo_1.png' %}" class="factory-logo">
     <div class="nav-empty-space"></div>
+    {% if user.is_authenticated and is_employee %}
+        <a href="{{employee_url}}" class="go-to-employee-button"><b>Рабочий портал</b></a>
+    {% endif %}
     <div id="nav-connect-btn">
         <b>Сделать заказ</b>
     </div>
     {% if user.is_authenticated %}
-    <a href="{% url 'main:client_profile' %}" class="profile-image-pointer">
-        <img src="{% static 'clients_interface/Files/profile_icon.png' %}" class="profile-image">
-    </a>
+        {% if is_client %}
+            <a href="{% url 'main:client_profile' %}" class="profile-image-pointer nav-bar-image-pointer">
+                <img src="{% static 'clients_interface/Files/profile_icon.png' %}" class="pointer-image">
+            </a>
+        {% else %}
+            <a href="{% url 'log_reg:logout' %}" class="logout-image-pointer nav-bar-image-pointer">
+                <img src="{% static 'clients_interface/Files/logout_icon_962.png' %}" class="pointer-image">
+            </a>
+        {% endif %}
     {% else %}
-    <a href="{% url 'log_reg:sign_in' %}" class="nav-logIn-image-pointer">
+    <a href="{% url 'log_reg:sign_in' %}" class="nav-logIn-image-pointer nav-bar-image-pointer">
         <img src="{% static 'clients_interface/Files/log_in.png' %}" class="nav-logIn-image">
     </a>
     {% endif %}

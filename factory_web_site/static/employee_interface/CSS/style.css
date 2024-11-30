@@ -33,10 +33,57 @@ body{
 .nav-bar{
     height: 90px;
     margin: 0px;
-    padding: 0px 15% 0px 15%;
+    padding-right: 15px;
     background-color: #287fd6;
     display: flex;
     box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.4);
+    align-items: center;
+}
+
+#nav-bar-menu-image{
+    height: 42%;
+    user-select: none;
+    cursor: pointer;
+}
+
+#hidden-nav-menu {
+    transition: 0.2s;
+    position: absolute;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    top: 90px;
+    right: 0px;
+    min-height: 180px;
+    width: 0px;
+    background: #FFFFFF;
+    z-index: 10;
+    box-shadow: -1px 1px 7px rgb(0 0 0 / 40%);
+    border-bottom-left-radius: 10px;
+}
+
+.nav-menu-option {
+    display: flex;
+    width: 100%;
+    height: 60px;
+    justify-content: center;
+    align-items: center;
+    color: black;
+    border: solid 1px #6f6d6d;
+    margin: 0px;
+    border-top: 0px;
+    font-size: 19px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.nav-menu-option:hover {
+    background-color: #e0e0e0;
+    color: black;
+}
+
+.last-option{
+    border-bottom-left-radius: 10px;
 }
 
 .title-container{
@@ -44,7 +91,7 @@ body{
     align-items: center;
 }
 
-.nav-empty-space{
+.empty-space{
     flex-grow: 1;
 }
 
@@ -61,11 +108,17 @@ body{
     line-height: 40px;
 }
 
-#form-error{
+#form-error {
     font-size: 17px;
-    color:red;
+    color: red;
     margin: 0px;
     padding: 0px;
+    line-height: normal;
+    margin-top: 10px;
+}
+
+.search-section{
+    margin: 5px 0px 20px 0px;
 }
 
 a{
@@ -83,6 +136,7 @@ a:hover{
 }
 
 table {
+    width: 100%;
     margin-top: 10px;
     margin-bottom: 40px;
     background: #fefefe;
@@ -118,12 +172,14 @@ th {
     background: #ededed;
     font-size: 20px;
     cursor: pointer;
+    font-family: sans-serif;
 }
 
 td {border-top:1px solid #d8d8d8; 
     border-right:1px solid #d8d8d8;
     background: #fefefe;
     font-size: 17px;
+    height: 31px;
 }
 
 .short-text-field{
@@ -132,6 +188,10 @@ td {border-top:1px solid #d8d8d8;
     height: 25px;
     width: 220px;
     margin: 3.5px 0px 7.5px 0px
+}
+
+.expanded_table_container{
+    min-width: 80%;
 }
 
 .content .last-line{
@@ -148,6 +208,10 @@ td {border-top:1px solid #d8d8d8;
 
 .column-sort-link:hover{
     color: black;
+}
+
+.search-add-line{
+    display: flex;
 }
 
 .search-input{
@@ -175,23 +239,39 @@ td {border-top:1px solid #d8d8d8;
     height: 25px;
     width: 65px;
     margin-left: 6px;
-}
-
-.reset-button{
-    display: inline-flex;
-    color: black;
     border: solid 1px #6f6d6d;
     border-radius: 2px;
-    height: 23px;
-    align-items: center;
-    justify-content: center;
-    width: 75px;
-    background-color: #f0f0f0;
-    margin-left: 7px;
-    user-select: none;
 }
 
-.reset-button:hover{
+button{
+    cursor: pointer;
+}
+
+button:hover{
+    background-color: #e0e0e0;
+}
+
+.button{
+    display: flex;
+    color: black;
+    border: solid 1px #6f6d6d;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f0f0;
+    user-select: none;
+    cursor: pointer;
+}
+
+.table-button{
+    display: inline-flex;
+    border-radius: 2px;
+    height: 23px;
+    align-self: end;
+    width: 75px;
+    margin-left: 7px;
+}
+
+.button:hover{
     background-color: #e0e0e0;
     color: black;
 }
@@ -205,7 +285,7 @@ td {border-top:1px solid #d8d8d8;
 }
 
 td .small-button {
-    height: 30px;
+    height: 26px;
     display: inline-block;
     margin-left: 7px;
     user-select: none;
@@ -230,6 +310,71 @@ td .small-button:hover{
 
 #remove-button:hover{
     border-radius: 15px;
+}
+.creation-form-container{
+    margin: 0px 27%;
+    display: flex;
+    flex-direction: column;
+}
+
+.item-data-row{
+    display: flex;
+    margin-top: 25px;
+}
+
+.item-title{
+    font-size: 35px;
+    margin-bottom: 10px;
+}
+
+.item-text{
+    min-width: 325px;
+    align-self: start;
+    margin-top: 0px;
+    font-size: 25px;
+}
+
+.item-form-field{
+    margin-top: 4px;
+    align-self: start;
+}
+
+.form-buttons{
+    display: flex;
+    margin-top: 10px;
+}
+
+.common-field {
+    height: 30px;
+    width: 225px;
+    border-radius: 7px;
+}
+
+.input-field{
+    border: solid 1px #6f6d6d
+}
+
+.select-field{
+    height: 30px;
+    width: 233px;
+}
+
+.send-info-btn {
+    height: 40px;
+    min-width: 100px;
+    border-radius: 10px;
+    border: solid 1px #6f6d6d;
+    font-size: 15px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.cancel-button {
+    display: flex;
+    width: 100px;
+    border-radius: 10px;
+    border: solid 1px #6f6d6d;
+    margin-left: 30px;
 }
 
 footer{

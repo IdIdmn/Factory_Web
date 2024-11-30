@@ -3,6 +3,7 @@ from django.urls import reverse
 from django.contrib.auth import authenticate, login, logout
 from .forms import *
 
+
 def sign_up(request):
     if request.method == "POST":
         form = SignUpForm(request.POST)
@@ -29,6 +30,7 @@ def sign_in(request):
     else:
         form = SignInForm()
     return render(request, "login-form.html", {'form': form, 'title': "Вход в аккаунт"})
+
 
 def log_out(request):
     logout(request)

@@ -9,8 +9,23 @@ class Client(models.Model):
     full_name = models.CharField(max_length=100, blank=True,null=True)
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
+    objects = ClientManager()
+
     class Meta:
         ordering = ["email"]
+
+    @staticmethod
+    def get_fields_titles_ru_en_dict():
+        return {"ID": "id", "Почта клиента": "email" ,"Полное имя": "full_name", "Номер телефона": "phone_number"}
+    
+    @staticmethod
+    def get_fields_values_titles():
+        return ["ID","Почта клиента", "Полное имя", "Номер телефона"]
+    
+    @property
+    def fields_values(self):
+        return [self.id, self.email, self.full_name, self.phone_number]
+     
 
 class Order(models.Model):
     client = models.ForeignKey(Client, related_name="orders", on_delete=models.CASCADE, null=True)
@@ -28,7 +43,7 @@ class Order(models.Model):
 
     @staticmethod
     def get_fields_titles_ru_en_dict():
-        return {"Почта клиента": "client" ,"Тип заказа": "order_type", "Комментарий": "description", "Дата": "date", "Цена, руб.": "cost", "Файл проекта": "files"}
+        return {"ID": "id", "Почта клиента": "client" ,"Тип заказа": "order_type", "Комментарий": "description", "Дата": "date", "Цена, руб.": "cost", "Файл проекта": "files"}
 
     @staticmethod 
     def get_profile_order_list_titles():
@@ -36,7 +51,7 @@ class Order(models.Model):
 
     @staticmethod
     def get_fields_values_titles():
-        return ["Почта клиента", "Комментарий", "Тип заказа", "Дата", "Цена, руб.", "Файл проекта"]
+        return ["ID", "Почта клиента", "Комментарий", "Тип заказа", "Дата", "Цена, руб.", "Файл проекта"]
 
     @property
     def profile_order_list(self):
@@ -44,4 +59,4 @@ class Order(models.Model):
 
     @property
     def fields_values(self):
-        return [self.client.email, self.description, self.order_type, self.date, self.cost, self.files]
+        return [self.id, self.client.email, self.description, self.order_type, self.date, self.cost, self.files]
