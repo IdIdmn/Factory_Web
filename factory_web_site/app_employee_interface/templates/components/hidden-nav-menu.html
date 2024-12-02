@@ -1,0 +1,12 @@
+<div id="hidden-nav-menu">
+    {% if is_Superuser %}
+        {% include 'components/superuser-menu-options.html' %}
+    {% elif is_Manager %}
+        {% include 'components/manager-menu-options.html' %}
+    {% elif is_PurchaseDepartmentEmployee %}
+        {% include 'components/pd-menu-options.html' %}
+    {% elif is_Chief %}
+        {% include 'components/chief-menu-options.html' %}
+    {% endif %}
+    <a class="nav-menu-option last-option" href="{% url 'main:home_page' %}">На главную</a>
+</div>

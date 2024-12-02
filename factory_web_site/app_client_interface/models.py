@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import User
 from .managers import *
+import os
 
 
 class Client(models.Model):
@@ -34,8 +35,15 @@ class Order(models.Model):
     date = models.DateField(auto_now_add=True)
     cost = models.FloatField(blank=True, null=True)
     files = models.FileField(upload_to="projects_store", blank=True, null=True)
+    status = models.CharField(default="На рассмотрении")
 
     objects = OrderManager()
+
+    def delete(self, *args, **kwargs):
+        if self.files: 
+            if os.path.isfile(self.files.path):
+                os.remove(self.files.path)
+        super(Order, self).delete(*args, **kwargs)
 
     @property
     def filename(self):
@@ -43,20 +51,20 @@ class Order(models.Model):
 
     @staticmethod
     def get_fields_titles_ru_en_dict():
-        return {"ID": "id", "Почта клиента": "client" ,"Тип заказа": "order_type", "Комментарий": "description", "Дата": "date", "Цена, руб.": "cost", "Файл проекта": "files"}
+        return {"ID": "id", "Почта клиента": "client" ,"Тип заказа": "order_type", "Комментарий": "description", "Дата": "date", "Статус": "status",  "Цена, руб.": "cost", "Файл проекта": "files"}
 
     @staticmethod 
     def get_profile_order_list_titles():
-        return ["Тип заказа", "Комментарий", "Дата", "Цена, руб.", "Файл проекта"]
+        return ["Тип заказа", "Комментарий", "Дата", "Статус", "Цена, руб.", "Файл проекта"]
 
     @staticmethod
     def get_fields_values_titles():
-        return ["ID", "Почта клиента", "Комментарий", "Тип заказа", "Дата", "Цена, руб.", "Файл проекта"]
+        return ["ID", "Почта клиента", "Комментарий", "Тип заказа", "Дата", "Статус", "Цена, руб.", "Файл проекта"]
 
     @property
     def profile_order_list(self):
-        return [self.order_type, self.description, self.date, self.cost]
+        return [self.order_type, self.description, self.date, self.status, self.cost]
 
     @property
     def fields_values(self):
-        return [self.id, self.client.email, self.description, self.order_type, self.date, self.cost, self.files]
+        return [self.id, self.client.email, self.description, self.order_type, self.date, self.status, self.cost, self.files]

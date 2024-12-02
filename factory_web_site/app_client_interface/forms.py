@@ -12,8 +12,8 @@ def is_Client(user):
 class OrderForm(forms.ModelForm):
     CHOICES = (
     ("Ремонт", "Ремонт"),
-    ("Создание детали по чертежам", "Создание детали по чертежам"),
-    ("Создание детали с нуля", "Создание детали с нуля")
+    ("Создание по чертежам", "Создание по чертежам"),
+    ("Создание с нуля", "Создание с нуля")
     )
     email = forms.CharField(label="Адрес электронной почты:")
     description = forms.CharField(label="Комментарий:", widget=forms.Textarea, required=False)

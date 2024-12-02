@@ -10,18 +10,7 @@
     <img src="{% static 'employee_interface/Files/menu-icon.png' %}" id="nav-bar-menu-image">
 </header>
 <section class="content">
-    <div id="hidden-nav-menu">
-        {% if is_Superuser %}
-            {% include 'components/superuser-menu-options.html' %}
-        {% elif is_Manager %}
-            {% include 'components/manager-menu-options.html' %}
-        {% elif is_PurchaseDepartmentEmployee %}
-            {% include 'components/pd-menu-options.html' %}
-        {% elif is_Chief %}
-            {% include 'components/chief-menu-options.html' %}
-        {% endif %}
-        <a class="nav-menu-option last-option" href="{% url 'main:home_page' %}">На главную</a>
-    </div>
+    {% include 'components/hidden-nav-menu.html' %}
     <div class="expanded_table_container">
         <div class="search-section">
             <div class = "search-add-line">
@@ -35,7 +24,10 @@
                     <a href="{% url 'employee:reset_table' %}{{request_params}}" class="table-button button">Сбросить</a>
                 </form>
                 <div class="empty-space"></div>
-                {% if not title == "Список клиентов" and is_allowed_to_modify %}
+                {% if title == "Журнал поставок"%}
+                    <a class="table-button monthly-spendings-button button" href="{% url 'employee:monthly_spendings' %}{{request_params}}">Посмотреть расходы</a>
+                {% endif %}
+                {% if not title == "Каталог клиентов" and is_allowed_to_modify %}
                     <a class="table-button button" href="{% url 'employee:create_item' model_name %}{{request_params}}">Создать</a>
                 {% endif %}
             </div>  
@@ -46,7 +38,6 @@
                     {% endif %}
                 {% endfor %}
             {% endif %}
-            
         </div>
         {% if model %}
             <table id="table">
@@ -61,10 +52,10 @@
                                 {% endif %}
                             {% endwith %}
                         {% endfor %}
-                        <th></th>
+                        <th class="last-cell"></th>
                     </tr>
                 </thead>
-                <tbody>
+                <tbody id="table-body">
                     {% for item in model %}
                         <tr id="table-row-{{forloop.counter}}">
                             {% for field in item.fields_values %}
@@ -84,15 +75,34 @@
                                     <td>{% include 'components/table-cell.html' %}</td>
                                 {% endif %}
                             {% endfor%}
-                            <td class="last-cell">
+                            <td class="last-cell {{model_name}}-last-cell">
                                 {% if is_allowed_to_modify %}
                                     <div id="row-buttons-{{forloop.counter}}" class="row-buttons-container">
-                                        <a class="small-button" href="{% url 'employee:edit_item' model_name item.id forloop.counter %}{{request_params}}">
-                                            <img src="{% static 'employee_interface/Files/edit-icon.png' %}">
-                                        </a>
-                                        <a class="small-button" id="remove-button" href="{% url 'employee:delete_item' model_name item.id forloop.counter %}{{request_params}}">
+                                        {% if model_name == "Order" and is_Manager %}
+                                            <a class="small-button" href="{% url 'employee:order_info' item.id forloop.counter %}{{request_params}}">
+                                                <img src="{% static 'employee_interface/Files/info-icon.png' %}">
+                                            </a>
+                                        {% endif %}
+                                        {% if not model_name == "Order" or not item.status == "Выполнен" %}
+                                            <a class="small-button" href="{% url 'employee:edit_item' model_name item.id forloop.counter %}{{request_params}}">
+                                                <img src="{% static 'employee_interface/Files/edit-icon.png' %}">
+                                            </a>
+                                        {% endif %}
+                                        <a class="small-button" href="{% url 'employee:delete_item' model_name item.id forloop.counter %}{{request_params}}">
                                             <img src="{% static 'employee_interface/Files/remove-icon.png' %}">
                                         </a>
+                                    </div>
+                                {% elif model_name == "Order" and is_Chief %}
+                                    <div id="row-buttons-{{forloop.counter}}" class="row-buttons-container">
+                                        {% if item.status == "В работе" %}
+                                            <a class="small-button" href="{% url 'employee:confirm_order' item.id forloop.counter %}{{request_params}}">
+                                                <img src="{% static 'employee_interface/Files/confirm-icon.png' %}">
+                                            </a>
+                                        {% elif item.status == "Выполнен" %}
+                                            <a class="small-button" href="{% url 'employee:cancel_order_confirm' item.id forloop.counter %}{{request_params}}">
+                                                <img src="{% static 'employee_interface/Files/undo-icon.png' %}">
+                                            </a>
+                                        {% endif %}
                                     </div>
                                 {% endif %}
                             </td>

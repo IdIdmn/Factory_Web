@@ -1,0 +1,92 @@
+{% extends 'layouts/employee-base.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+<header class="nav-bar">
+    <div class="empty-space"></div>
+    <div class="title-container"><h1>{{title}}</h1></div>
+    <div class="empty-space"></div>
+</header>
+<section class="content">
+    <div class="expanded_table_container">
+        <div class="search-section">
+            <div class = "search-add-line">
+                <form method="post" id="search-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="overall-table-info search-input">Поиск {{search_form.search_column}}:</div> 
+                    {{search_form.common_text}}
+                    {{search_form.interval_start}}
+                    {{search_form.interval_end}}
+                    <button type="submit" class="search-confirm-button">Искать</button>
+                    <a href="{% url 'employee:reset_table' %}{{request_params}}" class="table-button button">Сбросить</a>
+                </form>
+                <div class="empty-space"></div>
+            </div>  
+            {% if search_form.errors %}
+                {% for field in search_form %}
+                    {% if field.errors %}
+                        <p id="form-error">{{ field.errors.0 }}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% if model %}
+            <table id="table">
+                <thead>
+                    <tr>
+                        {% for column_title in table_column_titles %}
+                            {% with model_field_titles|dict:column_title as model_field_title %}
+                                {% if forloop.counter == 1 %}
+                                    <th class="first-cell"><a class="column-sort-link" href="{% url 'employee:sort_by' model_name model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                                {% else %}
+                                    <th><a class="column-sort-link" href="{% url 'employee:sort_by' model_name model_field_title sort_direction %}{{request_params}}">{{column_title}}</a></th>
+                                {% endif %}
+                            {% endwith %}
+                        {% endfor %}
+                        <th class="last-cell"></th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    {% for item in model %}
+                        <tr id="table-row-{{forloop.counter}}">
+                            {% for field in item.fields_values %}
+                                {% if forloop.counter == 1 %}
+                                    <td class="first-cell">{% include 'components/table-cell.html' %}</td>
+                                {% elif forloop.last %} 
+                                    <td class="pre-last-cell">
+                                        {% if title == "Выбор заказа" %}
+                                            {% if field %}
+                                                <a href="{{field.url}}" download>{{item.filename}}</a> 
+                                            {% endif %}
+                                        {% else %}
+                                            {% include 'components/table-cell.html' %}
+                                        {% endif %}
+                                    </td>
+                                {% else %}
+                                    <td>{% include 'components/table-cell.html' %}</td>
+                                {% endif %}
+                            {% endfor%}
+                            <td class="last-cell">
+                                <div id="row-buttons-{{forloop.counter}}" class="row-buttons-container">
+                                    {% if form_type == "create" %}
+                                        <a class="small-button" href="{% url 'employee:create_chosen_item' form_model_name model_name item.id %}{{request_params}}">
+                                            <img src="{% static 'employee_interface/Files/add-icon.png' %}">
+                                        </a>
+                                    {% elif form_type == "edit" %}
+                                        <a class="small-button" href="{% url 'employee:edit_chosen_item' form_model_name edit_item_id edit_item_row model_name item.id %}{{request_params}}">
+                                            <img src="{% static 'employee_interface/Files/add-icon.png' %}">
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor%}
+                </tbody>
+            </table>
+        {% else %}
+        <p>{{empty_table_phrase}}</p>
+        {% endif %}
+    </div>    
+</section>
+{% endblock %}

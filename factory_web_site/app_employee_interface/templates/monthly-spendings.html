@@ -1,0 +1,57 @@
+{% extends 'layouts/employee-base.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+<header class="nav-bar">
+    <div class="empty-space"></div>
+    <div class="title-container"><h1>{{title}}</h1></div>
+    <div class="empty-space"></div>
+</header>
+<section class="content">
+    <div class="expanded_table_container">
+        <div class="search-section">
+            <div class = "search-add-line">
+                <form method="post" id="search-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="overall-table-info search-input">Поиск {{search_form.search_column}}:</div> 
+                    {{search_form.common_text}}
+                    {{search_form.interval_start}}
+                    {{search_form.interval_end}}
+                    <button type="submit" class="search-confirm-button">Искать</button>
+                    <a href="{% url 'employee:reset_table' %}{{request_params}}" class="table-button button">Сбросить</a>
+                </form>
+                <div class="empty-space"></div>
+                <a class="table-button button" href="{{previous_url}}">Назад</a>
+            </div>  
+            {% if search_form.errors %}
+                {% for field in search_form %}
+                    {% if field.errors %}
+                        <p id="form-error">{{ field.errors.0 }}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% if monthly_spendings %}
+            <table id="table">
+                <thead>
+                    <tr>
+                        <th><a class="column-sort-link" href="{% url 'employee:sort_by' 'monthly_spendings' 'period' sort_direction %}{{request_params}}">Период</a></th>
+                        <th><a class="column-sort-link" href="{% url 'employee:sort_by' 'monthly_spendings' 'total_cost' sort_direction %}{{request_params}}">Траты, руб.</a></th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    {% for item in monthly_spendings %}
+                        <tr>
+                            <td>{{item.period}}</td>
+                            <td>{{item.total_cost}}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+        <p>{{empty_table_phrase}}</p>
+        {% endif %}
+    </div>  
+</section>
+{% endblock %}

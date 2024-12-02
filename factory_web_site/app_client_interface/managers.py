@@ -26,10 +26,16 @@ class OrderQuerySet(models.QuerySet):
             return self.filter(client__email=email)
 
     def find_unprocessed(self):
-        return self.filter(cost__isnull=True)
+        return self.filter(status="На рассмотрении")
 
     def find_processed(self):
-        return self.filter(cost__isnull=False)
+        return self.exclude(status="На рассмотрении")
+
+    def find_in_work(self):
+        return self.filter(status="В работе")
+    
+    def find_executed(self):
+        return self.filter(status="Выполнен")
 
     def sort(self, column, direction):
         if direction == "desc":
@@ -39,6 +45,8 @@ class OrderQuerySet(models.QuerySet):
     def find(self, request_params):
         unprocessed = request_params.get("unprocessed_applications", None)
         processed = request_params.get("processed_applications", None)
+        in_work = request_params.get("in_work", None)
+        executed = request_params.get("executed", None)
         order_type = request_params.get("order_type", None)
         date = request_params.get("date", None)
         date_interval_borders = request_params.get("date_interval", None)
@@ -60,6 +68,10 @@ class OrderQuerySet(models.QuerySet):
             self = self.find_unprocessed()
         if processed is not None:
             self = self.find_processed()
+        if in_work is not None:
+            self = self.find_in_work()
+        if executed is not None:
+            self = self.find_executed()
         return self
 
 

@@ -114,7 +114,6 @@ class Supply(models.Model):
         return [self.order.id, self.material.id ,self.date, self.quantity, self.cost]
 
 
-
 class Schedule(models.Model):
     order = models.ForeignKey(Order, related_name="tasks", on_delete=models.CASCADE)
     employee = models.ForeignKey(Employee, related_name="tasks", on_delete=models.CASCADE)

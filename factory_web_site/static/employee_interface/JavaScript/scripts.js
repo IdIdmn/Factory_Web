@@ -2,34 +2,12 @@ document.addEventListener("DOMContentLoaded", function () {
     
     var search_options = document.getElementById("search-options")
     if(search_options){
-        function updateInputFields() {
-            const text_input_fields = ["order_type", "date", "email", "phone_number", "full_name", "company_name", "vendor", "metal_type",
-                 "metal_grade", "specialty", "serial_number", "machine_name", "material_id", "order_id", "employee_id", "machine_id", "start_date", "end_date"]
-            const interval_input_fields = ["date_interval", "cost", "quantity"]
-            const non_input_field = ["unprocessed_applications", "processed_applications"]
-            if (interval_input_fields.includes(search_options.value)){
-                document.getElementById("text-input").style.display = "none"   
-                document.getElementById("interval-start-input").style.display = "inline-block"
-                document.getElementById("interval-end-input").style.display = "inline-block"
-                document.getElementById("text-input").value = ""
-                document.getElementById("interval-start-input").value = ""
-                document.getElementById("interval-end-input").value = ""
-            } else if (text_input_fields.includes(search_options.value)) {
-                document.getElementById("text-input").style.display = "inline-block"
-                document.getElementById("interval-start-input").style.display = "none"
-                document.getElementById("interval-end-input").style.display = "none"
-                document.getElementById("text-input").value = ""
-                document.getElementById("interval-start-input").value = ""
-                document.getElementById("interval-end-input").value = ""
-            } else if (non_input_field.includes(search_options.value)) {
-                document.getElementById("text-input").style.display = "none"
-                document.getElementById("interval-start-input").style.display = "none"
-                document.getElementById("interval-end-input").style.display = "none"
-                document.getElementById("text-input").value = ""
-                document.getElementById("interval-start-input").value = ""
-                document.getElementById("interval-end-input").value = ""
-            }
+        const text_input_fields = ["order_type", "date", "email", "phone_number", "full_name", "company_name", "vendor", "metal_type","metal_grade", "specialty",
+             "serial_number", "machine_name", "material_id", "order_id", "employee_id", "machine_id", "start_date", "end_date", "month"]
+        const interval_input_fields = ["date_interval", "cost", "quantity", "month_interval"]
+        const non_input_field = ["unprocessed_applications", "processed_applications", "in_work", "executed"]
 
+        function setHint(){
             if (search_options.value == "cost" || search_options.value == "quantity"){
                 document.getElementById("interval-start-input").setAttribute("placeholder", "начало диапазона")
                 document.getElementById("interval-end-input").setAttribute("placeholder", "конец диапазона")
@@ -66,11 +44,82 @@ document.addEventListener("DOMContentLoaded", function () {
                 document.getElementById("text-input").setAttribute("placeholder", "62")
             } else if (search_options.value == "machine_id"){
                 document.getElementById("text-input").setAttribute("placeholder", "38")
-            } 
+            } else if (search_options.value == "month"){
+                document.getElementById("text-input").setAttribute("placeholder", "мм.гггг")
+            } else if (search_options.value == "month_interval"){
+                document.getElementById("interval-start-input").setAttribute("placeholder", "начало (мм.гггг)")
+                document.getElementById("interval-end-input").setAttribute("placeholder", "конец (мм.гггг)")
+            }
         }
-        window.addEventListener("load", updateInputFields);
+
+        function setInputFields() {
+            if (interval_input_fields.includes(search_options.value)){
+                document.getElementById("text-input").style.display = "none"   
+                document.getElementById("interval-start-input").style.display = "inline-block"
+                document.getElementById("interval-end-input").style.display = "inline-block"
+            } else if (text_input_fields.includes(search_options.value)) {
+                document.getElementById("text-input").style.display = "inline-block"
+                document.getElementById("interval-start-input").style.display = "none"
+                document.getElementById("interval-end-input").style.display = "none"
+            } else if (non_input_field.includes(search_options.value)) {
+                document.getElementById("text-input").style.display = "none"
+                document.getElementById("interval-start-input").style.display = "none"
+                document.getElementById("interval-end-input").style.display = "none"
+            }
+
+            setHint()
+
+        }
+
+        function updateInputFields() {
+            if (interval_input_fields.includes(search_options.value)){
+                document.getElementById("text-input").style.display = "none"   
+                document.getElementById("interval-start-input").style.display = "inline-block"
+                document.getElementById("interval-end-input").style.display = "inline-block"
+                document.getElementById("text-input").value = ""
+                document.getElementById("interval-start-input").value = ""
+                document.getElementById("interval-end-input").value = ""
+            } else if (text_input_fields.includes(search_options.value)) {
+                document.getElementById("text-input").style.display = "inline-block"
+                document.getElementById("interval-start-input").style.display = "none"
+                document.getElementById("interval-end-input").style.display = "none"
+                document.getElementById("text-input").value = ""
+                document.getElementById("interval-start-input").value = ""
+                document.getElementById("interval-end-input").value = ""
+            } else if (non_input_field.includes(search_options.value)) {
+                document.getElementById("text-input").style.display = "none"
+                document.getElementById("interval-start-input").style.display = "none"
+                document.getElementById("interval-end-input").style.display = "none"
+                document.getElementById("text-input").value = ""
+                document.getElementById("interval-start-input").value = ""
+                document.getElementById("interval-end-input").value = ""
+            }
+            
+            setHint()
+    
+        }
+
+        window.addEventListener("load", setInputFields);
         search_options.addEventListener("change", updateInputFields);
     }
+
+
+    // var table = document.getElementById("table")
+    // table.addEventListener('mouseenter',  function() {
+    //     var last_cells = document.querySelectorAll(".last-cell");
+    //     last_cells.forEach(function(last_cell) {
+    //         last_cell.style.display = "table-cell"
+    //     });
+
+    // });
+    // table.addEventListener('mouseleave',  function() {
+    //     var last_cells = document.querySelectorAll(".last-cell");
+    //     last_cells.forEach(function(last_cell) {
+    //         last_cell.style.display = "none"
+    //     });
+
+    // });
+
 
     let i = 1
     let row
@@ -94,6 +143,7 @@ document.addEventListener("DOMContentLoaded", function () {
         row = document.getElementById(`table-row-${i}`)
     }
 
+
     var headers = document.querySelectorAll("th");
     headers.forEach(function(header) {
         header.addEventListener("click", function() {
@@ -109,7 +159,6 @@ document.addEventListener("DOMContentLoaded", function () {
     var side_menu_button = document.getElementById("nav-bar-menu-image")
     side_menu_button.addEventListener("click", function() {
         var nav_menu = document.getElementById("hidden-nav-menu")
-        console.log("SMTH happened")
         if (nav_menu.style.width == "0px" || !nav_menu.style.width) {
             nav_menu.style.width = "300px"
         } else{

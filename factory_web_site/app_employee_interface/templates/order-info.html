@@ -1,0 +1,60 @@
+{% extends 'layouts/employee-base.html' %}
+
+{% block content %}
+<header class="nav-bar">
+    <div class="empty-space"></div>
+</header>
+<section class="order-info-container">
+    <div class="info-title-container">
+        <div class="empty-space"></div>
+        <p class="info-page-title">Заказ #{{order.id}}</p>
+        <div class="empty-space"></div>
+        <a class="button back-button" href="{{previous_url}}" >Назад</a>
+    </div>
+    <div class="common-order-info">
+        <p class="order-info-text"><b>Почта клиента:</b> {{order.client.email}}</p>
+        <p class="order-info-text"><b>Дата оформления:</b> {{order.date}}</p>
+        <p class="order-info-text"><b>Тип заказа:</b> {{order.order_type}}</p>
+        <p class="order-info-text"><b>Стоимость:</b>
+            {% if order.cost %} 
+                {{order.cost}}
+            {% else %}
+                ...
+            {% endif%}
+        </p>
+        <p class="order-info-text"><b>Статус:</b> {{order.status}}</p>
+    </div>
+    {% if order.status == "На рассмотрении" %}
+        <p class="order-info-text">Заказ пока не был принят в работу.</p>
+    {% else %}
+        <div class="order-supplies">
+            {% if supplies %}
+                <p class="order-info-text">Были закуплены следующие материалы:</p>
+                <ul>
+                    {% for supply in supplies %}
+                        <li>{{supply.material.metal_type}} {{supply.material.metal_grade}} — {{supply.quantity}} килограмм(-а/-ов) от компании "{{supply.material.vendor.company_name}}" общей стоимостью: {{supply.cost}} рублей</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="order-info-text">Для выполнения заказа материалы не приобретались</p>
+            {% endif %}
+        </div>
+        <div class="order-tasks">
+            {% if tasks %}
+                {% if order.status == "В работе" %}
+                    <p class="order-info-text">Заказ выполняют:</p>
+                {% else %}
+                    <p class="order-info-text">Заказ выполняли:</p>
+                {% endif %}
+                <ul>
+                    {% for task in tasks %}
+                        <li>{{task.employee.full_name}} (ID {{task.employee.id}}) — на станке {{task.machine.serial_number}} ({{task.machine.machine_name}}) с {{task.start_date}} по {{task.end_date}} </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                    <p class="order-info-text">На выполнение заказа пока ещё не были назначены рабочие.</p>
+            {% endif%}
+        </div>
+    {% endif %}
+</section>
+{% endblock %}

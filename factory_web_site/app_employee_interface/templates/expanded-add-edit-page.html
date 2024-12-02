@@ -1,0 +1,57 @@
+{% extends 'layouts/employee-base.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+<header class="nav-bar">
+    <div class="empty-space"></div>
+</header>
+<section class="creation-form-container">
+    <p class="item-title"><b>Данные {{object_type}}:</b></p>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class = form-fields-container>
+            <div class="item-info-container">
+                {% for field in form %}
+                    <div class="item-data-row">
+                        <p class="item-text">{{field.label}}:</p>
+                        <div class="item-form-field">{{field}}</div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="choose-buttons-container">
+                {% if form_type == "create" %}
+                    {% if form_model_name == "Supply" %}
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_create' form_model_name 'Order' form_type %}{{request_params}}">Выбрать</a>
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_create' form_model_name 'Material' form_type %}{{request_params}}">Выбрать</a>
+                    {% elif form_model_name == "Schedule" %}
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_create' form_model_name 'Order' form_type %}{{request_params}}">Выбрать</a>
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_create' form_model_name 'Employee' form_type %}{{request_params}}">Выбрать</a>
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_create' form_model_name 'Machine' form_type %}{{request_params}}">Выбрать</a>
+                    {% endif %}
+                {% elif form_type == "edit" %}
+                    {% if form_model_name == "Supply" %}
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_edit' form_model_name 'Order' form_type edit_item_id edit_item_row %}{{request_params}}">Выбрать</a>
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_edit' form_model_name 'Material' form_type edit_item_id edit_item_row %}{{request_params}}">Выбрать</a>
+                    {% elif form_model_name == "Schedule" %}
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_edit' form_model_name 'Order' form_type edit_item_id edit_item_row %}{{request_params}}">Выбрать</a>
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_edit' form_model_name 'Employee' form_type edit_item_id edit_item_row %}{{request_params}}">Выбрать</a>
+                        <a class="choose-button button" href="{% url 'employee:choose_item_to_edit' form_model_name 'Machine' form_type edit_item_id edit_item_row %}{{request_params}}">Выбрать</a>
+                    {% endif %}
+                {% endif %}
+            </div>
+        </div>
+        <div class="form-buttons">
+            <button type="submit" class="send-info-btn">Сохранить</button>
+            <a class="cancel-button button" href="{{previous_url}}">Отменить</a>
+        </div>
+        {% if form.errors %}
+            {% for field in form %}
+                {% if field.errors %}
+                    <p id="form-error">{{ field.errors.0 }}</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </form>
+</section>
+{% endblock %}

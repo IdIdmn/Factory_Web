@@ -1,15 +1,18 @@
 import re
-from tracemalloc import start
 from django import forms
 from django.forms import ValidationError
 from django.db.models import Q
 from .models import *
 from app_client_interface.models import *
 
-days_in_month = { 1: 31, 2: 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31 }
-
-
-
+def check_date(date):
+    day = int(date[:2])
+    month = int(date[3:5])
+    year = int(date[6:])
+    days_in_month = { 1: 31, 2: 29 if year % 4 == 0 else 28, 3: 31, 4: 30, 5: 31, 6: 30, 7: 31, 8: 31, 9: 30, 10: 31, 11: 30, 12: 31 }
+    if year > 0 and 0 < month <= 12 and 0 < day <= days_in_month[month]:
+        return True
+    return False
 
 
 # ----------------------- Заказы -----------------------
@@ -23,6 +26,8 @@ class OrderSearchForm(forms.Form):
     ("date_interval", "по временному промежутку"),
     ("unprocessed_applications", "нерассмотренных заказов"),
     ("processed_applications", "рассмотренных заказов"),
+    ("in_work", "заказов в работе"),
+    ("executed", "выполненных заказов"),
     )
     search_column = forms.ChoiceField(choices=CHOICES)
     common_text = forms.CharField(required=False)
@@ -44,7 +49,7 @@ class OrderSearchForm(forms.Form):
                 if not re.match(r"[ а-яА-ЯёЁa-zA-Z]+$", value):
                     raise ValidationError("Некорректно введён тип услуг.")
             elif search_column == "date":
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value) or not check_date(value):
                     raise ValidationError("Дата введена некорректно.")
         return value
     
@@ -59,7 +64,7 @@ class OrderSearchForm(forms.Form):
                 start_value = "0"
         elif search_column == "date_interval":
             if start_value is not None and start_value:
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value) or not check_date(start_value):
                     raise ValidationError("Начальная дата введена некорректно.")
             else:
                 start_value = "01.01.0001"
@@ -76,18 +81,154 @@ class OrderSearchForm(forms.Form):
                 end_value = "2147483646"
         elif search_column == "date_interval":
             if end_value is not None and end_value:
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value) or not check_date(end_value):
                     raise ValidationError("Конечная дата введена некорректно.")
             else:
                 end_value = "30.12.9999"
         return end_value
+
+
+class ChiefOrderSearchForm(forms.Form):
+    CHOICES = (
+    ("email", "по почтовому адресу"),
+    ("order_type", "по типу заказа"),
+    ("cost", "по цене"),
+    ("date", "по дате"),
+    ("date_interval", "по временному промежутку"),
+    ("in_work", "заказов в работе"),
+    ("executed", "выполненных заказов"),
+    )
+    search_column = forms.ChoiceField(choices=CHOICES)
+    common_text = forms.CharField(required=False)
+    interval_start = forms.CharField(required=False)
+    interval_end = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
+        self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
+        self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
+
+    def clean_common_text(self):
+        search_column = self.cleaned_data.get("search_column")
+        value = self.cleaned_data.get("common_text")
+        if value is not None and value:
+            if search_column == "order_type":
+                if not re.match(r"[ а-яА-ЯёЁa-zA-Z]+$", value):
+                    raise ValidationError("Некорректно введён тип услуг.")
+            elif search_column == "date":
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value) or not check_date(value):
+                    raise ValidationError("Дата введена некорректно.")
+        return value
     
+    def clean_interval_start(self):
+        search_column = self.cleaned_data.get("search_column")
+        start_value = self.cleaned_data.get("interval_start")
+        if search_column == "cost":
+            if start_value is not None and start_value:
+                if not re.match(r"\d+$" , start_value):
+                    raise ValidationError("Начальная сумма введена некорректно.")
+            else:
+                start_value = "0"
+        elif search_column == "date_interval":
+            if start_value is not None and start_value:
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value) or not check_date(start_value):
+                    raise ValidationError("Начальная дата введена некорректно.")
+            else:
+                start_value = "01.01.0001"
+        return start_value
+    
+    def clean_interval_end(self):
+        search_column = self.cleaned_data.get("search_column")
+        end_value = self.cleaned_data.get("interval_end")
+        if search_column == "cost":
+            if end_value is not None and end_value:
+                if not re.match(r"\d+$" , end_value):
+                    raise ValidationError("Конечная сумма введена некорректно.")
+            else:
+                end_value = "2147483646"
+        elif search_column == "date_interval":
+            if end_value is not None and end_value:
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value) or not check_date(end_value):
+                    raise ValidationError("Конечная дата введена некорректно.")
+            else:
+                end_value = "30.12.9999"
+        return end_value
+
+
+class ChooseOrderSearchForm(forms.Form):
+    CHOICES = (
+    ("email", "по почтовому адресу"),
+    ("order_type", "по типу заказа"),
+    ("cost", "по цене"),
+    ("date", "по дате"),
+    ("date_interval", "по временному промежутку"),
+    )
+    search_column = forms.ChoiceField(choices=CHOICES)
+    common_text = forms.CharField(required=False)
+    interval_start = forms.CharField(required=False)
+    interval_end = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
+        self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
+        self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
+
+    def clean_common_text(self):
+        search_column = self.cleaned_data.get("search_column")
+        value = self.cleaned_data.get("common_text")
+        if value is not None and value:
+            if search_column == "order_type":
+                if not re.match(r"[ а-яА-ЯёЁa-zA-Z]+$", value):
+                    raise ValidationError("Некорректно введён тип услуг.")
+            elif search_column == "date":
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value) or not check_date(value):
+                    raise ValidationError("Дата введена некорректно.")
+        return value
+    
+    def clean_interval_start(self):
+        search_column = self.cleaned_data.get("search_column")
+        start_value = self.cleaned_data.get("interval_start")
+        if search_column == "cost":
+            if start_value is not None and start_value:
+                if not re.match(r"\d+$" , start_value):
+                    raise ValidationError("Начальная сумма введена некорректно.")
+            else:
+                start_value = "0"
+        elif search_column == "date_interval":
+            if start_value is not None and start_value:
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value) or not check_date(start_value):
+                    raise ValidationError("Начальная дата введена некорректно.")
+            else:
+                start_value = "01.01.0001"
+        return start_value
+    
+    def clean_interval_end(self):
+        search_column = self.cleaned_data.get("search_column")
+        end_value = self.cleaned_data.get("interval_end")
+        if search_column == "cost":
+            if end_value is not None and end_value:
+                if not re.match(r"\d+$" , end_value):
+                    raise ValidationError("Конечная сумма введена некорректно.")
+            else:
+                end_value = "2147483646"
+        elif search_column == "date_interval":
+            if end_value is not None and end_value:
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value) or not check_date(end_value):
+                    raise ValidationError("Конечная дата введена некорректно.")
+            else:
+                end_value = "30.12.9999"
+        return end_value
+
 
 class OrderCreateForm(forms.ModelForm):
     CHOICES = (
     ("Ремонт", "Ремонт"),
-    ("Создание детали по чертежам", "Создание детали по чертежам"),
-    ("Создание детали с нуля", "Создание детали с нуля")
+    ("Создание по чертежам", "Создание по чертежам"),
+    ("Создание с нуля", "Создание с нуля")
     )
     email = forms.CharField(label="Адрес электронной почты")
     description = forms.CharField(label="Комментарий", widget=forms.Textarea, required=False)
@@ -130,6 +271,8 @@ class OrderCreateForm(forms.ModelForm):
         
     def save(self, commit=True):
         order = super().save(commit=False)
+        if self.cleaned_data.get("cost") is not None:
+            order.status = "В работе"
         if commit:
             client, created = Client.objects.get_or_create(email=self.cleaned_data.get("email"))
             order.client = client
@@ -140,8 +283,8 @@ class OrderCreateForm(forms.ModelForm):
 class OrderEditForm(forms.ModelForm):
     CHOICES = (
     ("Ремонт", "Ремонт"),
-    ("Создание детали по чертежам", "Создание детали по чертежам"),
-    ("Создание детали с нуля", "Создание детали с нуля")
+    ("Создание по чертежам", "Создание по чертежам"),
+    ("Создание с нуля", "Создание с нуля")
     )
     email = forms.CharField(label="Адрес электронной почты")
     description = forms.CharField(label="Комментарий", widget=forms.Textarea, required=False)
@@ -181,6 +324,10 @@ class OrderEditForm(forms.ModelForm):
         order.description = self.cleaned_data.get("description")
         order.cost = self.cleaned_data.get("cost")
         order.order_type = self.cleaned_data.get("order_type")
+        if self.cleaned_data.get("cost") is None:
+            order.status = "На рассмотрении"
+        else:
+            order.status = "В работе"
         if commit:
             order.save()
         return order
@@ -249,7 +396,7 @@ class ClientEditForm(forms.ModelForm):
         email = self.cleaned_data.get("email")
         if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
             raise ValidationError("Некорректный почтовый адрес")
-        if Client.objects.filter(Q(email=email) & Q(full_name__isnull=False)).count() and email != self.email:
+        if Client.objects.filter(Q(email=email) & Q(full_name__isnull=False)).exists() and email != self.email:
             raise ValidationError("Почта уже занята")
         return email
 
@@ -313,7 +460,7 @@ class VendorSearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
-        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field', "placeholder" : "ремонт"})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
         self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
         self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
 
@@ -335,13 +482,13 @@ class VendorCreateForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
             raise ValidationError('Введён некорректный почтовый адрес.')
-        if Vendor.objects.filter(email=email).count():
+        if Vendor.objects.filter(email=email).exists():
             raise ValidationError("Одна из компаний в каталоге имеет данный почтовый адрес")
         return email
     
     def clean_company_name(self):
         company_name = self.cleaned_data.get("company_name")
-        if Vendor.objects.filter(company_name=company_name).count():
+        if Vendor.objects.filter(company_name=company_name).exists():
             raise ValidationError("Компания с таким названием уже занесена в список.")
         return company_name
 
@@ -364,13 +511,13 @@ class VendorEditForm(forms.ModelForm):
         email = self.cleaned_data.get('email')
         if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
             raise ValidationError('Введён некорректный почтовый адрес.')
-        if Vendor.objects.filter(email=email).count() and email != Vendor.objects.get(id=self.id).email:
+        if Vendor.objects.filter(email=email).exists() and email != Vendor.objects.get(id=self.id).email:
             raise ValidationError("Компания с такой почтой уже занесена в список.")
         return email
     
     def clean_company_name(self):
         company_name = self.cleaned_data.get("company_name")
-        if Vendor.objects.filter(company_name=company_name).count() and company_name != Vendor.objects.get(id=self.id).company_name:
+        if Vendor.objects.filter(company_name=company_name).exists() and company_name != Vendor.objects.get(id=self.id).company_name:
             raise ValidationError("Компания с таким названием уже занесена в список.")
         return company_name
         
@@ -399,7 +546,7 @@ class MaterialSearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
-        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field', "placeholder" : "ремонт"})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
         self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
         self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
 
@@ -447,7 +594,7 @@ class MaterialCreateForm(forms.ModelForm):
 
     def clean_company_name(self):
         company_name = self.cleaned_data.get("company_name")
-        if not Vendor.objects.filter(company_name = company_name).count():
+        if not Vendor.objects.filter(company_name = company_name).exists():
             raise ValidationError("Компания с таким названием ещё не занесена в каталог")
         return company_name
 
@@ -455,9 +602,9 @@ class MaterialCreateForm(forms.ModelForm):
         metal_grade = self.cleaned_data.get("metal_grade")
         metal_type = self.cleaned_data.get("metal_type")
         company_name = self.cleaned_data.get("company_name")
-        if Vendor.objects.filter(company_name = company_name).count():
+        if Vendor.objects.filter(company_name = company_name).exists():
             vendor = Vendor.objects.get(company_name=company_name)
-            if Material.objects.filter(Q(metal_type=metal_type) & Q(metal_grade=metal_grade) & Q(vendor=vendor)).count():
+            if Material.objects.filter(Q(metal_type=metal_type) & Q(metal_grade=metal_grade) & Q(vendor=vendor)).exists():
                 raise ValidationError("Информация о данном сплаве от этого производителя уже занесена в каталог")
         return metal_grade
 
@@ -498,7 +645,7 @@ class MaterialEditForm(forms.ModelForm):
 
     def clean_company_name(self):
         company_name = self.cleaned_data.get("company_name")
-        if not Vendor.objects.filter(company_name = company_name).count():
+        if not Vendor.objects.filter(company_name = company_name).exists():
             raise ValidationError("Компания с таким названием ещё не занесена в каталог")
         return company_name
 
@@ -507,9 +654,9 @@ class MaterialEditForm(forms.ModelForm):
         metal_type = self.cleaned_data.get("metal_type")
         company_name = self.cleaned_data.get("company_name")
         cur_material = Material.objects.get(id=self.id)
-        if Vendor.objects.filter(company_name = company_name).count():
+        if Vendor.objects.filter(company_name = company_name).exists():
             vendor = Vendor.objects.get(company_name=company_name)
-            if Material.objects.filter(Q(metal_type=metal_type) & Q(metal_grade=metal_grade) & Q(vendor=vendor)).count() and \
+            if Material.objects.filter(Q(metal_type=metal_type) & Q(metal_grade=metal_grade) & Q(vendor=vendor)).exists() and \
                 not (metal_type == cur_material.metal_type and metal_grade == cur_material.metal_grade and company_name == cur_material.vendor.company_name):
                 raise ValidationError("Информация о данном сплаве от этого производителя уже занесена в каталог")
         return metal_grade
@@ -523,6 +670,7 @@ class MaterialEditForm(forms.ModelForm):
     def save(self, commit=True):
         material = material = Material.objects.get(id=self.id)
         material.vendor = Vendor.objects.get(company_name = self.cleaned_data.get("company_name"))
+        material.cost = self.cleaned_data.get("cost")
         material.metal_type = self.cleaned_data.get("metal_type")
         material.metal_grade = self.cleaned_data.get("metal_grade")
         if commit:
@@ -544,7 +692,7 @@ class EmployeeSearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
-        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field', "placeholder" : "ремонт"})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
         self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
         self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
 
@@ -651,7 +799,7 @@ class MachineSearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
-        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field', "placeholder" : "ремонт"})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
         self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
         self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
 
@@ -674,7 +822,7 @@ class MachineCreateForm(forms.ModelForm):
     def clean_serial_number(self):
         serial_number = self.cleaned_data.get("serial_number")
         print(serial_number)
-        if Machine.objects.filter(serial_number = serial_number).count():
+        if Machine.objects.filter(serial_number = serial_number).exists():
             raise ValidationError("Данный станок уже внесён в каталог")
         return serial_number
 
@@ -711,7 +859,7 @@ class MachineEditForm(forms.ModelForm):
 
     def clean_serial_number(self):
         serial_number = self.cleaned_data.get("serial_number")
-        if Machine.objects.filter(serial_number = serial_number).count() and serial_number != Machine.objects.get(id=self.id).serial_number:
+        if Machine.objects.filter(serial_number = serial_number).exists() and serial_number != Machine.objects.get(id=self.id).serial_number:
             raise ValidationError("Данный станок уже внесён в каталог")
         return serial_number
 
@@ -755,7 +903,7 @@ class SupplySearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
-        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field', "placeholder" : "ремонт"})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
         self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
         self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
     
@@ -770,7 +918,7 @@ class SupplySearchForm(forms.Form):
                 if not re.match(r"\d+$", value):
                     raise ValidationError("Некорректно введён ID материала.")
             elif search_column == "date":
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value) or not check_date(value):
                     raise ValidationError("Дата введена некорректно.")
         return value
     
@@ -785,7 +933,7 @@ class SupplySearchForm(forms.Form):
                 start_value = "0"
         elif search_column == "date_interval":
             if start_value is not None and start_value:
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value) or not check_date(start_value):
                     raise ValidationError("Начальная дата введена некорректно.")
             else:
                 start_value = "01.01.0001"
@@ -808,7 +956,7 @@ class SupplySearchForm(forms.Form):
                 end_value = "2147483646"
         elif search_column == "date_interval":
             if end_value is not None and end_value:
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value) or not check_date(end_value):
                     raise ValidationError("Конечная дата введена некорректно.")
             else:
                 end_value = "30.12.9999"
@@ -842,7 +990,7 @@ class SupplyCreateForm(forms.ModelForm):
         order_id = self.cleaned_data.get("order_id")
         if order_id < 0:
             raise ValidationError("Некорректный ID заказа")
-        if not Order.objects.filter(id = order_id).count():
+        if not Order.objects.filter(id = order_id).exists():
             raise ValidationError("Не существует заказа с указанным ID")
         return order_id
 
@@ -850,7 +998,7 @@ class SupplyCreateForm(forms.ModelForm):
         material_id = self.cleaned_data.get("material_id")
         if material_id < 0:
             raise ValidationError("Некорректный ID материала")
-        if not Material.objects.filter(id = material_id).count():
+        if not Material.objects.filter(id = material_id).exists():
             raise ValidationError("Не существует материала с указанным ID")
         return material_id
     
@@ -894,7 +1042,7 @@ class SupplyEditForm(forms.ModelForm):
         order_id = self.cleaned_data.get("order_id")
         if order_id < 0:
             raise ValidationError("Некорректный ID заказа")
-        if not Order.objects.filter(id = order_id).count():
+        if not Order.objects.filter(id = order_id).exists():
             raise ValidationError("Не существует заказа с указанным ID")
         return order_id
 
@@ -902,7 +1050,7 @@ class SupplyEditForm(forms.ModelForm):
         material_id = self.cleaned_data.get("material_id")
         if material_id < 0:
             raise ValidationError("Некорректный ID материала")
-        if not Material.objects.filter(id = material_id).count():
+        if not Material.objects.filter(id = material_id).exists():
             raise ValidationError("Не существует материала с указанным ID")
         return material_id
     
@@ -940,7 +1088,7 @@ class ScheduleSearchForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
-        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field', "placeholder" : "ремонт"})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
         self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
         self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
     
@@ -959,10 +1107,10 @@ class ScheduleSearchForm(forms.Form):
                 if not re.match(r"\d+$", value):
                     raise ValidationError("Некорректно введён ID станка.")
             elif search_column == "start_date":
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value) or not check_date(value):
                     raise ValidationError("Дата начала введена некорректно.")
             elif search_column == "end_date":
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", value) or not check_date(value):
                     raise ValidationError("Дата окончания введена некорректно.")
         return value
     
@@ -971,7 +1119,7 @@ class ScheduleSearchForm(forms.Form):
         start_value = self.cleaned_data.get("interval_start")
         if search_column == "date_interval":
             if start_value is not None and start_value:
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value) or not check_date(start_value):
                     raise ValidationError("Начальная дата введена некорректно.")
             else:
                 start_value = "01.01.0001"
@@ -982,7 +1130,7 @@ class ScheduleSearchForm(forms.Form):
         end_value = self.cleaned_data.get("interval_end")
         if search_column == "date_interval":
             if end_value is not None and end_value:
-                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value):
+                if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_value) or not check_date(end_value):
                     raise ValidationError("Конечная дата введена некорректно.")
             else:
                 end_value = "30.12.9999"
@@ -1014,7 +1162,7 @@ class ScheduleCreateForm(forms.ModelForm):
         order_id = self.cleaned_data.get("order_id")
         if order_id < 0:
             raise ValidationError("Некорректный ID заказа")
-        if not Order.objects.filter(id = order_id).count():
+        if not Order.objects.filter(id = order_id).exists():
             raise ValidationError("Не существует заказа с указанным ID")
         return order_id
     
@@ -1022,7 +1170,7 @@ class ScheduleCreateForm(forms.ModelForm):
         employee_id = self.cleaned_data.get("employee_id")
         if employee_id < 0:
             raise ValidationError("Некорректный ID сотрудника")
-        if not Employee.objects.filter(id = employee_id).count():
+        if not Employee.objects.filter(id = employee_id).exists():
             raise ValidationError("Не существует сотрудника с указанным ID")
         return employee_id
     
@@ -1031,9 +1179,9 @@ class ScheduleCreateForm(forms.ModelForm):
         employee_id = self.cleaned_data.get("employee_id")
         if machine_id < 0:
             raise ValidationError("Некорректный ID станка")
-        if not Machine.objects.filter(id = machine_id).count():
+        if not Machine.objects.filter(id = machine_id).exists():
             raise ValidationError("Не существует станка с указанным ID")
-        if Employee.objects.filter(id = employee_id).count():
+        if Employee.objects.filter(id = employee_id).exists():
             if Machine.objects.get(id = machine_id).specialty not in Employee.objects.get(id = employee_id).specialty:
                 raise ValidationError("Сотрудник не обладает нужными навыками для работы за данным станком.") 
         return machine_id
@@ -1042,14 +1190,14 @@ class ScheduleCreateForm(forms.ModelForm):
         machine_id = self.cleaned_data.get("machine_id")
         employee_id = self.cleaned_data.get("employee_id")
         start_date = self.cleaned_data.get("start_date")
-        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_date):
+        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_date) or not check_date(start_date):
             raise ValidationError("Дата начала работ введена некорректно.")
         start_date = datetime.datetime.strptime(start_date, "%d.%m.%Y")
-        if Employee.objects.filter(id = employee_id).count():
-            if Schedule.objects.filter(Q(employee__id=employee_id) & Q(start_date__lte=start_date) & Q(end_date__gte=start_date)).count():
+        if Employee.objects.filter(id = employee_id).exists():
+            if Schedule.objects.filter(Q(employee__id=employee_id) & Q(start_date__lte=start_date) & Q(end_date__gte=start_date)).exists():
                 raise ValidationError("Данный сотрудник занят в указанный промежуток времени (некорректная дата начала)")
-        if Machine.objects.filter(id = machine_id).count():
-            if Schedule.objects.filter(Q(machine__id=machine_id) & Q(start_date__lte=start_date) & Q(end_date__gte=start_date)).count():
+        if Machine.objects.filter(id = machine_id).exists():
+            if Schedule.objects.filter(Q(machine__id=machine_id) & Q(start_date__lte=start_date) & Q(end_date__gte=start_date)).exists():
                 raise ValidationError("Данный станок занят в указанный промежуток времени (некорректная дата начала)")
         return start_date
     
@@ -1057,18 +1205,23 @@ class ScheduleCreateForm(forms.ModelForm):
         machine_id = self.cleaned_data.get("machine_id")
         employee_id = self.cleaned_data.get("employee_id")
         end_date = self.cleaned_data.get("end_date")
-        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_date):
+        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_date) or not check_date(end_date):
             raise ValidationError("Дата окончания работ введена некорректно.")
         end_date = datetime.datetime.strptime(end_date, "%d.%m.%Y")
         start_date = self.cleaned_data.get("start_date")
-        if start_date < start_date:
-            raise ValidationError("Дата окончания не может быть раньше даты начала")
-        if Employee.objects.filter(id = employee_id).count():
-            if Schedule.objects.filter(Q(employee__id=employee_id) & Q(end_date__lte=start_date) & Q(end_date__gte=start_date)).count():
-                raise ValidationError("Данный сотрудник занят в указанный промежуток времени (некорректная дата окончания)")
-        if Machine.objects.filter(id = machine_id).count():
-            if Schedule.objects.filter(Q(machine__id=machine_id) & Q(end_date__lte=start_date) & Q(end_date__gte=start_date)).count():
-                raise ValidationError("Данный станок занят в указанный промежуток времени (некорректная дата окончания)")
+        if start_date is not None:
+            if end_date < start_date:
+                raise ValidationError("Дата окончания не может быть раньше даты начала")
+            if Employee.objects.filter(id = employee_id).exists():
+                if Schedule.objects.filter(Q(employee__id=employee_id) & Q(start_date__lte=end_date) & Q(end_date__gte=end_date)).exists():
+                    raise ValidationError("Данный сотрудник занят в указанный промежуток времени (некорректная дата окончания)")
+                elif Schedule.objects.filter(Q(employee__id=employee_id) & Q(start_date__gte=start_date) & Q(end_date__lte=end_date)).exists():
+                    raise ValidationError("Данный сотрудник занят в указанный промежуток времени")
+            if Machine.objects.filter(id = machine_id).exists():
+                if Schedule.objects.filter(Q(machine__id=machine_id) & Q(start_date__lte=end_date) & Q(end_date__gte=end_date)).exists():
+                    raise ValidationError("Данный станок занят в указанный промежуток времени (некорректная дата окончания)")
+                elif Schedule.objects.filter(Q(machine__id=machine_id) & Q(start_date__gte=start_date) & Q(end_date__lte=end_date)).exists():
+                    raise ValidationError("Данный станок занят в указанный промежуток времени")
         return end_date
     
     def save(self, commit=True):
@@ -1096,8 +1249,9 @@ class ScheduleEditForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         if kwargs.get("initial") is not None:
-            kwargs["initial"]["start_date"] = datetime.date.strftime(kwargs["initial"]["start_date"], "%d.%m.%Y")
-            kwargs["initial"]["end_date"] = datetime.date.strftime(kwargs["initial"]["end_date"], "%d.%m.%Y")
+            if type(kwargs["initial"]["start_date"]) != str and type(kwargs["initial"]["end_date"]) != str:
+                kwargs["initial"]["start_date"] = datetime.date.strftime(kwargs["initial"]["start_date"], "%d.%m.%Y")
+                kwargs["initial"]["end_date"] = datetime.date.strftime(kwargs["initial"]["end_date"], "%d.%m.%Y")
         self.id = kwargs.pop("id", None)
         super().__init__(*args, **kwargs)
         self.fields['order_id'].widget.attrs.update({'class': 'common-field input-field'})
@@ -1113,7 +1267,7 @@ class ScheduleEditForm(forms.ModelForm):
         order_id = self.cleaned_data.get("order_id")
         if order_id < 0:
             raise ValidationError("Некорректный ID заказа")
-        if not Order.objects.filter(id = order_id).count():
+        if not Order.objects.filter(id = order_id).exists():
             raise ValidationError("Не существует заказа с указанным ID")
         return order_id
     
@@ -1121,7 +1275,7 @@ class ScheduleEditForm(forms.ModelForm):
         employee_id = self.cleaned_data.get("employee_id")
         if employee_id < 0:
             raise ValidationError("Некорректный ID сотрудника")
-        if not Employee.objects.filter(id = employee_id).count():
+        if not Employee.objects.filter(id = employee_id).exists():
             raise ValidationError("Не существует сотрудника с указанным ID")
         return employee_id
     
@@ -1130,9 +1284,9 @@ class ScheduleEditForm(forms.ModelForm):
         employee_id = self.cleaned_data.get("employee_id")
         if machine_id < 0:
             raise ValidationError("Некорректный ID станка")
-        if not Machine.objects.filter(id = machine_id).count():
+        if not Machine.objects.filter(id = machine_id).exists():
             raise ValidationError("Не существует станка с указанным ID")
-        if Employee.objects.filter(id = employee_id).count():
+        if Employee.objects.filter(id = employee_id).exists():
             if Machine.objects.get(id = machine_id).specialty not in Employee.objects.get(id = employee_id).specialty:
                 raise ValidationError("Сотрудник не обладает нужными навыками для работы за данным станком.") 
         return machine_id
@@ -1141,14 +1295,14 @@ class ScheduleEditForm(forms.ModelForm):
         machine_id = self.cleaned_data.get("machine_id")
         employee_id = self.cleaned_data.get("employee_id")
         start_date = self.cleaned_data.get("start_date")
-        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_date):
+        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_date) or not check_date(start_date):
             raise ValidationError("Дата начала работ введена некорректно.")
         start_date = datetime.datetime.strptime(start_date, "%d.%m.%Y")
-        if Employee.objects.filter(id = employee_id).count():
-            if Schedule.objects.exclude(id=self.id).filter(Q(employee__id=employee_id) & Q(start_date__gte=start_date) & Q(end_date__lte=start_date)).count():
+        if Employee.objects.filter(id = employee_id).exists():
+            if Schedule.objects.exclude(id=self.id).filter(Q(employee__id=employee_id) & Q(start_date__lte=start_date) & Q(end_date__gte=start_date)).exists():
                 raise ValidationError("Данный сотрудник занят в указанный промежуток времени (некорректная дата начала)")
-        if Machine.objects.filter(id = machine_id).count():
-            if Schedule.objects.exclude(id=self.id).filter(Q(machine__id=machine_id) & Q(start_date__gte=start_date) & Q(end_date__lte=start_date)).count():
+        if Machine.objects.filter(id = machine_id).exists():
+            if Schedule.objects.exclude(id=self.id).filter(Q(machine__id=machine_id) & Q(start_date__lte=start_date) & Q(end_date__gte=start_date)).exists():
                 raise ValidationError("Данный станок занят в указанный промежуток времени (некорректная дата начала)")
         return start_date
     
@@ -1156,18 +1310,23 @@ class ScheduleEditForm(forms.ModelForm):
         machine_id = self.cleaned_data.get("machine_id")
         employee_id = self.cleaned_data.get("employee_id")
         end_date = self.cleaned_data.get("end_date")
-        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_date):
+        if not re.match(r"\d{2}\.\d{2}\.\d{4}$", end_date) or not check_date(end_date):
             raise ValidationError("Дата окончания работ введена некорректно.")
         end_date = datetime.datetime.strptime(end_date, "%d.%m.%Y")
         start_date = self.cleaned_data.get("start_date")
-        if end_date < start_date:
-            raise ValidationError("Дата окончания не может быть раньше даты начала")
-        if Employee.objects.filter(id = employee_id).count():
-            if Schedule.objects.exclude(id=self.id).filter(Q(employee__id=employee_id) & Q(start_date__lte=end_date) & Q(end_date__gte=end_date)).count():
-                raise ValidationError("Данный сотрудник занят в указанный промежуток времени (некорректная дата окончания)")
-        if Machine.objects.filter(id = machine_id).count():
-            if Schedule.objects.exclude(id=self.id).filter(Q(machine__id=machine_id) & Q(start_date__lte=end_date) & Q(end_date__gte=end_date)).count():
-                raise ValidationError("Данный станок занят в указанный промежуток времени (некорректная дата окончания)")
+        if start_date is not None:
+            if end_date < start_date:
+                raise ValidationError("Дата окончания не может быть раньше даты начала")
+            if Employee.objects.filter(id = employee_id).exists():
+                if Schedule.objects.exclude(id=self.id).filter(Q(employee__id=employee_id) & Q(start_date__lte=end_date) & Q(end_date__gte=end_date)).exists():
+                    raise ValidationError("Данный сотрудник занят в указанный промежуток времени (некорректная дата окончания)")
+                elif Schedule.objects.exclude(id=self.id).filter(Q(employee__id=employee_id) & Q(start_date__gte=start_date) & Q(end_date__lte=end_date)).exists():
+                    raise ValidationError("Данный сотрудник занят в указанный промежуток времени")
+            if Machine.objects.filter(id = machine_id).exists():
+                if Schedule.objects.exclude(id=self.id).filter(Q(machine__id=machine_id) & Q(start_date__lte=end_date) & Q(end_date__gte=end_date)).exists():
+                    raise ValidationError("Данный станок занят в указанный промежуток времени (некорректная дата окончания)")
+                elif Schedule.objects.exclude(id=self.id).filter(Q(machine__id=machine_id) & Q(start_date__gte=start_date) & Q(end_date__lte=end_date)).exists():
+                    raise ValidationError("Данный станок занят в указанный промежуток времени")
         return end_date
     
     def save(self, commit=True):
@@ -1180,3 +1339,67 @@ class ScheduleEditForm(forms.ModelForm):
         if commit:
             schedule_item.save()
         return schedule_item       
+
+
+# ----------------------- Месячные расходы -----------------------
+
+class MonthlySpendingsSearchForm(forms.Form):
+    CHOICES = (
+        ("month", "по месяцу"),
+        ("month_interval", "по временному промежутку"),
+        ("cost", "сумме трат"),
+    )
+    search_column = forms.ChoiceField(choices=CHOICES)
+    common_text = forms.CharField(required=False)
+    interval_start = forms.CharField(required=False)
+    interval_end = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
+        self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
+        self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
+
+    def clean_common_text(self):
+        search_column = self.cleaned_data.get("search_column")
+        value = self.cleaned_data.get("common_text")
+        if value is not None and value:
+            if search_column == "month":
+                if not re.match(r"\d{2}\.\d{4}$", value) or not check_date("01." + value):
+                    raise ValidationError("Месяц введён некорректно.")
+        return value
+    
+    def clean_interval_start(self):
+        search_column = self.cleaned_data.get("search_column")
+        start_value = self.cleaned_data.get("interval_start")
+        if search_column == "month_interval":
+            if start_value is not None and start_value:
+                if not re.match(r"\d{2}\.\d{4}$", start_value) or not check_date("01." + start_value):
+                    raise ValidationError("Начальная дата введена некорректно.")
+            else:
+                start_value = "01.0001"
+        elif search_column == "cost":
+            if start_value is not None and start_value:
+                if not re.match(r"\d+$" , start_value):
+                    raise ValidationError("Начальная сумма введена некорректно.")
+            else:
+                start_value = "0"
+        return start_value
+    
+    def clean_interval_end(self):
+        search_column = self.cleaned_data.get("search_column")
+        end_value = self.cleaned_data.get("interval_end")
+        if search_column == "month_interval":
+            if end_value is not None and end_value:
+                if not re.match(r"\d{2}\.\d{4}$", end_value) or not check_date("01." + end_value):
+                    raise ValidationError("Конечная дата введена некорректно.")
+            else:
+                end_value = "12.9999"
+        if search_column == "cost":
+            if end_value is not None and end_value:
+                if not re.match(r"\d+$" , end_value):
+                    raise ValidationError("Конечная сумма введена некорректно.")
+            else:
+                end_value = "2147483646"
+        return end_value

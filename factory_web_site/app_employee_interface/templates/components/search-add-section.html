@@ -1,0 +1,24 @@
+<div class="search-section">
+    <div class = "search-add-line">
+        <form method="post" id="search-form" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="overall-table-info search-input">Поиск {{search_form.search_column}}:</div> 
+            {{search_form.common_text}}
+            {{search_form.interval_start}}
+            {{search_form.interval_end}}
+            <button type="submit" class="search-confirm-button">Искать</button>
+            <a href="{% url 'employee:reset_table' %}{{request_params}}" class="table-button button">Сбросить</a>
+        </form>
+        <div class="empty-space"></div>
+        {% if not title == "Каталог клиентов" and is_allowed_to_modify %}
+            <a class="table-button button" href="{% url 'employee:create_item' model_name %}{{request_params}}">Создать</a>
+        {% endif %}
+    </div>  
+    {% if search_form.errors %}
+        {% for field in search_form %}
+            {% if field.errors %}
+                <p id="form-error">{{ field.errors.0 }}</p>
+            {% endif %}
+        {% endfor %}
+    {% endif %}
+</div>

@@ -274,9 +274,9 @@ class ScheduleQuerySet(models.QuerySet):
         if machine_id is not None and machine_id:
             self = self.find_by_machine(machine_id)
         if start_date is not None and start_date:
-            self = self.find_by_machine(datetime.datetime.strptime(start_date, "%d.%m.%Y"))
+            self = self.find_by_start_date(datetime.datetime.strptime(start_date, "%d.%m.%Y"))
         if end_date is not None and end_date:
-            self = self.find_by_machine(datetime.datetime.strptime(end_date, "%d.%m.%Y"))
+            self = self.find_by_end_date(datetime.datetime.strptime(end_date, "%d.%m.%Y"))
         if date_interval_borders is not None:
             date_interval_borders = date_interval_borders.split(", ")
             self = self.find_by_date_interval(datetime.datetime.strptime(date_interval_borders[0], "%d.%m.%Y"), datetime.datetime.strptime(date_interval_borders[1], "%d.%m.%Y"))

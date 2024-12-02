@@ -60,7 +60,7 @@ def main_page(request):
             if is_Manager(current_user):
                 employee_url = reverse("employee:orders")
             elif is_Chief(current_user):
-                employee_url = reverse("employee:staff")
+                employee_url = reverse("employee:employees")
             elif is_PurchaseDepartmentEmployee(current_user):
                 employee_url = reverse("employee:vendors")
         context = {
