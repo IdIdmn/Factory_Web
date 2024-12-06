@@ -169,7 +169,7 @@ class OrderSearchForm(forms.Form):
                 if not re.match(r"\d{2}\.\d{2}\.\d{4}$", start_value):
                     raise ValidationError("Начальная дата введена некорректно.")
             else:
-                start_value = "00.00.0001"
+                start_value = "01.01.0001"
         return start_value
     
     def clean_interval_end(self):

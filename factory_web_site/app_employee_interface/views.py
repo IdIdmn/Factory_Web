@@ -8,24 +8,24 @@ from .forms import *
 from django.shortcuts import get_object_or_404
 from django.db.models.functions import TruncMonth
 from django.db.models import Sum 
-
+from django.contrib.auth.models import User
 
 ITEM_EDIT_FORMS = {"Order": OrderEditForm, "Client": ClientEditForm, "Vendor": VendorEditForm, "Material": MaterialEditForm, "Employee": EmployeeEditForm,
-                        "Machine": MachineEditForm, "Supply": SupplyEditForm, "Schedule": ScheduleEditForm}
+                        "Machine": MachineEditForm, "Supply": SupplyEditForm, "Schedule": ScheduleEditForm, "User": UserEditForm}
 
 ITEM_CREATE_FORMS = {"Order": OrderCreateForm, "Vendor": VendorCreateForm, "Material": MaterialCreateForm,  "Employee": EmployeeCreateForm, "Machine": MachineCreateForm,
-                        "Supply": SupplyCreateForm, "Schedule": ScheduleCreateForm}
+                        "Supply": SupplyCreateForm, "Schedule": ScheduleCreateForm, "User": UserCreateForm}
 
-MODELS = {"Order": Order, "Client": Client, "Vendor": Vendor, "Material":Material, "Employee": Employee, "Machine": Machine, "Supply": Supply, "Schedule": Schedule}
+MODELS = {"Order": Order, "Client": Client, "Vendor": Vendor, "Material":Material, "Employee": Employee, "Machine": Machine, "Supply": Supply, "Schedule": Schedule, "User": User}
 
 OBJECT_TYPES = {"Order": "о заказе", "Client": "о клиенте", "Vendor": "о поставщике", "Material": "о материале" , "Employee": "о сотруднике", "Machine": "о станке",
-                    "Supply": "о поставке", "Schedule": "записи в графике занятости"}
+                    "Supply": "о поставке", "Schedule": "о записи в графике занятости", "User": "о пользователе"}
 
 ITEM_SEARCH_FORMS = {"Order": OrderSearchForm, "Material": MaterialSearchForm, "Employee": EmployeeSearchForm, "Machine": MachineSearchForm}
 
 CHOOSE_TABLE_NAME = {"Order": "Выбор заказа", "Material": "Выбор материала", "Employee": "Выбор сотрудника", "Machine": "Выбор станка"}
 
-ALLOWED_MODELS = { 'Manager': ['Order', 'Client'], 'Chief': ['Employee', "Machine", "Schedule"], 'PurchaseDepartment': ['Vendor', 'Material', "Supply"] } 
+ALLOWED_MODELS = { 'Manager': ['Order', 'Client'], 'Chief': ['Employee', "Machine", "Schedule"], 'PurchaseDepartment': ['Vendor', 'Material', "Supply"], "Admin": ["User"] } 
 
 MONTHS = { 'January': 'Январь', 'February': 'Февраль', 'March': 'Март', 'April': 'Апрель', 'May': 'Май', 'June': 'Июнь', 'July': 'Июль',
            'August': 'Август', 'September': 'Сентябрь', 'October': 'Октябрь', 'November': 'Ноябрь', 'December': 'Декабрь'
@@ -56,11 +56,15 @@ def is_Chief(user):
 
 
 def is_Employee(user):
-    return is_Manager(user) or is_PurchaseDepartmentEmployee(user) or is_Chief(user)
+    return is_Manager(user) or is_PurchaseDepartmentEmployee(user) or is_Chief(user) or is_Admin(user)
 
 
 def is_Superuser(user):
-    return is_Manager(user) and is_PurchaseDepartmentEmployee(user) and is_Chief(user)
+    return is_Manager(user) and is_PurchaseDepartmentEmployee(user) and is_Chief(user) and is_Admin(user)
+
+
+def is_Admin(user):
+    return user.groups.filter(name='Admin').exists()
 
 
 def change_search_items_status(search_column, request_params):
@@ -238,7 +242,6 @@ def edit_item(request, model_name, edit_item_id, edit_item_row, chosen_model_nam
             form = ITEM_CREATE_FORMS[model_name](initial=initial_form_data)
         else:
             request.session.pop("initial_form_data", None)
-            print(item_params)
             form = ITEM_EDIT_FORMS[model_name](initial=item_params, id = edit_item_id)
     context = {
         "form": form,
@@ -303,7 +306,7 @@ def choose_item(request, form_model_name, chosen_model_name, form_type, edit_ite
         chosen_model = chosen_model.find_in_work()
     if request_params:
         chosen_model = chosen_model.find(request_params)
-    if chosen_model.count() == 0:
+    if not chosen_model.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         chosen_model = chosen_model.sort(sort_by_column, sort_direction)
@@ -389,7 +392,7 @@ def orders_list(request):
         orders = Order.objects.all().find_processed().order_by("id")
     if request_params:
         orders = orders.find(request_params)
-    if orders.count() == 0:
+    if not orders.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         orders = orders.sort(sort_by_column, sort_direction)
@@ -441,7 +444,7 @@ def clients_list(request):
     clients = Client.objects.all().order_by("id")
     if request_params:
         clients = clients.find(request_params)
-    if clients.count() == 0:
+    if not clients.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         clients = clients.sort(sort_by_column, sort_direction)
@@ -493,7 +496,7 @@ def vendors_list(request):
     vendors = Vendor.objects.all().order_by("id")
     if request_params:
         vendors = vendors.find(request_params)
-    if vendors.count() == 0:
+    if not vendors.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         vendors = vendors.sort(sort_by_column, sort_direction)
@@ -549,7 +552,7 @@ def materials_list(request):
     materials = Material.objects.all().order_by("id")
     if request_params:
         materials = materials.find(request_params)
-    if materials.count() == 0:
+    if not materials.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         materials = materials.sort(sort_by_column, sort_direction)
@@ -601,7 +604,7 @@ def employees_list(request):
     employees = Employee.objects.all().order_by("id")
     if request_params:
         employees = employees.find(request_params)
-    if employees.count() == 0:
+    if not employees.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         employees = employees.sort(sort_by_column, sort_direction)
@@ -653,7 +656,7 @@ def machines_list(request):
     machines = Machine.objects.all().order_by("id")
     if request_params:
         machines = machines.find(request_params)
-    if machines.count() == 0:
+    if not machines.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         machines = machines.sort(sort_by_column, sort_direction)
@@ -707,9 +710,10 @@ def supplies_list(request):
     request_params["url"] = request.path
     empty_table_phrase = "Список пуст"        
     supplies = Supply.objects.all().order_by("id")
+    print(supplies)
     if request_params:
         supplies = supplies.find(request_params)
-    if supplies.count() == 0:
+    if not supplies.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         supplies = supplies.sort(sort_by_column, sort_direction)
@@ -730,6 +734,8 @@ def supplies_list(request):
                 "is_Chief": is_Chief(request.user),
                 "is_PurchaseDepartmentEmployee": is_PurchaseDepartmentEmployee(request.user),
                 "is_allowed_to_modify": is_allowed_to_modify}
+    for supply in supplies:
+        print(supply.order.id)
     return render(request, "table-page.html", context)
 
 
@@ -765,7 +771,7 @@ def schedule(request):
     supplies = Schedule.objects.all().order_by("id")
     if request_params:
         supplies = supplies.find(request_params)
-    if supplies.count() == 0:
+    if not supplies.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     if sort_by_column is not None:
         supplies = supplies.sort(sort_by_column, sort_direction)
@@ -818,7 +824,7 @@ def monthly_spendings(request):
         request_params = request.GET.copy()
         if search_form.is_valid():
             search_column = search_form.cleaned_data.get("search_column")
-            if search_column == "month_interval" or search_column == "cost":
+            if search_column == "month_interval" or search_column == "cost" or search_column == "total_cost":
                 interval_borders = [search_form.cleaned_data.get("interval_start"), search_form.cleaned_data.get("interval_end")]
                 request_params[search_column] = ", ".join(interval_borders)
             else:
@@ -846,7 +852,7 @@ def monthly_spendings(request):
     # Ищем
     month_interval = request_params.get("month_interval")
     month = request_params.get("month")
-    cost = request_params.get("cost")
+    cost = request_params.get("total_cost")
     if month_interval is not None:
         interval_borders = month_interval.split(", ")
         start_interval = datetime.datetime.strptime(f"01.{interval_borders[0]}", "%d.%m.%Y")
@@ -857,10 +863,10 @@ def monthly_spendings(request):
         monthly_spendings = monthly_spendings.filter(period=month_period)
     if cost is not None and cost:
         interval_borders = cost.split(", ")
-        monthly_spendings = monthly_spendings.filter(Q(cost__gte=int(interval_borders[0])) & Q(cost__lte=int(interval_borders[1])))
+        monthly_spendings = monthly_spendings.filter(Q(total_cost__gte=int(interval_borders[0])) & Q(total_cost__lte=int(interval_borders[1])))
     formatted_monthly_spendings = []
     empty_table_phrase = "Список пуст"  
-    if monthly_spendings.count() == 0:
+    if not monthly_spendings.exists():
         empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
     for item in monthly_spendings: 
         period = item['period'].strftime("%B %Y")
@@ -881,3 +887,67 @@ def monthly_spendings(request):
     }
     return render(request, "monthly-spendings.html", context)
 
+
+@login_required(login_url="log_reg:sign_in")
+@user_passes_test(is_Admin, login_url="log_reg:sign_in")
+def users_list(request):
+    if request.method == 'POST':
+        search_form = UserSearchForm(request.POST)
+        request_params = request.GET.copy()
+        if search_form.is_valid():
+            search_column = search_form.cleaned_data.get("search_column")
+            request_params[search_column] = search_form.cleaned_data.get("common_text")
+            return redirect(request.path + "?" + urlencode(request_params))
+        else: 
+            request.session['form_data'] = request.POST
+            if request_params:
+                return redirect(request.path + "?" + urlencode(request_params))
+    else:
+        form_data = request.session.pop('form_data', None)
+        if form_data is not None:
+            search_form = UserSearchForm(form_data)
+        else:
+            search_form = UserSearchForm()
+    sort_direction = request.session.pop('sort_direction', None)
+    sort_by_column = request.session.pop('sort_by_column', None)
+    request_params = request.GET.copy()
+    users = User.objects.all().order_by("id")
+    # Сортируем
+    if sort_direction is not None:
+        if sort_direction == "desc":
+            sort_by_column = "-" + sort_by_column
+    if sort_by_column is not None:
+        if not sort_by_column.endswith("role"):
+            users = users.order_by(sort_by_column)
+    # Ищем
+    username = request_params.get("username")
+    role = request_params.get("role")
+    if username is not None and username:
+        users = users.filter(username__icontains=username)
+    if role is not None and role:
+        users = users.filter(groups__name=role)
+    expanded_users = []
+    for user in users:
+        user_groups = user.groups.all()
+        group_names = ", ".join([group.name for group in user_groups])
+        expanded_users.append({"id": user.id, "username": user.username, "role": group_names, "is_Superuser": is_Superuser(user)})
+    if sort_by_column is not None:
+        if sort_by_column.endswith("role"):
+            expanded_users = sorted(expanded_users, key=lambda user: user["role"], reverse=True if sort_by_column[0] == '-' else False)
+    empty_table_phrase = "Список пуст"  
+    if not users.exists():
+        empty_table_phrase = "Нет записей, удовлетворяющих заданным условиям."
+    request_params["url"] = request.path
+    previous_url = reverse("employee:supplies") + "?" + urlencode(request_params)
+    request_params = "?" + urlencode(request_params)
+    context = {
+        "search_form": search_form,
+        "title": "Список пользователей",
+        "users": expanded_users,
+        "previous_url": previous_url,
+        "sort_direction": change_direction(sort_direction),
+        "request_params": request_params,
+        "empty_table_phrase": empty_table_phrase,
+        "is_Superuser": is_Superuser(request.user)
+    }
+    return render(request, "users-list.html", context)

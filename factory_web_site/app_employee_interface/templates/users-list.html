@@ -1,0 +1,74 @@
+{% extends 'layouts/employee-base.html' %}
+{% load static %}
+{% load custom_tags %}
+
+{% block content %}
+<header class="nav-bar">
+    <div class="empty-space"></div>
+    <div class="title-container"><h1>{{title}}</h1></div>
+    <div class="empty-space"></div>
+    <img src="{% static 'employee_interface/Files/menu-icon.png' %}" id="nav-bar-menu-image">
+</header>
+<section class="content">
+    {% include 'components/hidden-nav-menu.html' %}
+    <div class="expanded_table_container">
+        <div class="search-section">
+            <div class = "search-add-line">
+                <form method="post" id="search-form" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="overall-table-info search-input">Поиск {{search_form.search_column}}:</div> 
+                    {{search_form.common_text}}
+                    {{search_form.interval_start}}
+                    {{search_form.interval_end}}
+                    <button type="submit" class="search-confirm-button">Искать</button>
+                    <a href="{% url 'employee:reset_table' %}{{request_params}}" class="table-button button">Сбросить</a>
+                </form>
+                <div class="empty-space"></div>
+                <a class="table-button button" href="{% url 'employee:create_item' 'User' %}{{request_params}}">Создать</a>
+            </div>  
+            {% if search_form.errors %}
+                {% for field in search_form %}
+                    {% if field.errors %}
+                        <p id="form-error">{{ field.errors.0 }}</p>
+                    {% endif %}
+                {% endfor %}
+            {% endif %}
+        </div>
+        {% if users %}
+            <table id="table">
+                <thead>
+                    <tr>
+                        <th><a class="column-sort-link" href="{% url 'employee:sort_by' 'User' 'id' sort_direction %}{{request_params}}">ID</a></th>
+                        <th><a class="column-sort-link" href="{% url 'employee:sort_by' 'User' 'username' sort_direction %}{{request_params}}">Имя пользователя</a></th>
+                        <th><a class="column-sort-link" href="{% url 'employee:sort_by' 'User' 'role' sort_direction %}{{request_params}}">Роль</a></th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody id="table-body">
+                    {% for item in users %}
+                        <tr id="table-row-{{forloop.counter}}">
+                            <td>{{item.id}}</td>
+                            <td>{{item.username}}</td>
+                            <td class="pre-last-cell">{{item.role}}</td>
+                            <td class="last-cell">
+                                <div id="row-buttons-{{forloop.counter}}" class="row-buttons-container">
+                                    {% if not item.is_Superuser %}
+                                        <a class="small-button" href="{% url 'employee:edit_item' 'User' item.id forloop.counter %}{{request_params}}">
+                                            <img src="{% static 'employee_interface/Files/edit-icon.png' %}">
+                                        </a>
+                                        <a class="small-button" href="{% url 'employee:delete_item' 'User' item.id forloop.counter %}{{request_params}}">
+                                            <img src="{% static 'employee_interface/Files/remove-icon.png' %}">
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>{{empty_table_phrase}}</p>
+        {% endif %}
+    </div>  
+</section>
+{% endblock %}

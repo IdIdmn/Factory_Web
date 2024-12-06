@@ -1,6 +1,7 @@
 import re
 from django import forms
 from django.forms import ValidationError
+from django.contrib.auth.models import User, Group
 from django.db.models import Q
 from .models import *
 from app_client_interface.models import *
@@ -1347,7 +1348,7 @@ class MonthlySpendingsSearchForm(forms.Form):
     CHOICES = (
         ("month", "по месяцу"),
         ("month_interval", "по временному промежутку"),
-        ("cost", "сумме трат"),
+        ("total_cost", "сумме трат"),
     )
     search_column = forms.ChoiceField(choices=CHOICES)
     common_text = forms.CharField(required=False)
@@ -1379,7 +1380,7 @@ class MonthlySpendingsSearchForm(forms.Form):
                     raise ValidationError("Начальная дата введена некорректно.")
             else:
                 start_value = "01.0001"
-        elif search_column == "cost":
+        elif search_column == "total_cost":
             if start_value is not None and start_value:
                 if not re.match(r"\d+$" , start_value):
                     raise ValidationError("Начальная сумма введена некорректно.")
@@ -1396,10 +1397,126 @@ class MonthlySpendingsSearchForm(forms.Form):
                     raise ValidationError("Конечная дата введена некорректно.")
             else:
                 end_value = "12.9999"
-        if search_column == "cost":
+        if search_column == "total_cost":
             if end_value is not None and end_value:
                 if not re.match(r"\d+$" , end_value):
                     raise ValidationError("Конечная сумма введена некорректно.")
             else:
                 end_value = "2147483646"
         return end_value
+    
+
+# ----------------------- Пользователи -----------------------
+
+
+class UserSearchForm(forms.Form):
+    CHOICES = (
+        ("username", "по имени пользователя"),
+        ("role", "по роли"),
+    )
+    search_column = forms.ChoiceField(choices=CHOICES)
+    common_text = forms.CharField(required=False)
+    interval_start = forms.CharField(required=False)
+    interval_end = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['search_column'].widget.attrs.update({'id': 'search-options', 'class': 'search-input-selector'})
+        self.fields['common_text'].widget.attrs.update({'id': 'text-input','class': 'search-input-field'})
+        self.fields['interval_start'].widget.attrs.update({'id': 'interval-start-input', 'class': 'search-input-field'})
+        self.fields['interval_end'].widget.attrs.update({'id': 'interval-end-input', 'class': 'search-input-field'})
+
+    def clean_common_text(self):
+        search_column = self.cleaned_data.get("search_column")
+        value = self.cleaned_data.get("common_text")
+        if value is not None and value:
+            if search_column == "role":
+                if not re.match(r"\w+$", value):
+                    raise ValidationError("Некорректно введено название роли пользователя")
+        return value
+    
+
+class UserCreateForm(forms.ModelForm):
+    CHOICES = (
+        ("Manager", "Manager"),
+        ("PurchaseDepartment", "PurchaseDepartment"),
+        ("Chief", "Chief"),
+        ("Admin", "Admin"),
+    )
+    username = forms.CharField(label="Имя пользователя")
+    password = forms.CharField(label="Пароль")
+    role = forms.ChoiceField(label="Роль", choices=CHOICES)
+
+
+    class Meta:
+        model = User
+        fields = ["username"]
+    
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({'class': 'common-field input-field'})
+        self.fields['password'].widget.attrs.update({'class': 'common-field input-field'})
+        self.fields['role'].widget.attrs.update({'class': 'select-field input-field'})
+
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.filter(username=username).exists():
+            raise ValidationError("Имя уже занято")
+        return username
+
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data.get("password"))
+        if commit:
+            user.save()
+            user.groups.add(Group.objects.get(name=self.cleaned_data.get("role")))
+            user.save()
+        return user
+
+
+class UserEditForm(forms.Form):
+    CHOICES = (
+        ("Manager", "Manager"),
+        ("PurchaseDepartment", "PurchaseDepartment"),
+        ("Chief", "Chief"),
+        ("Admin", "Admin"),
+    )
+    username = forms.CharField(label="Имя пользователя")
+    password = forms.CharField(label="Пароль", required=False)
+    role = forms.ChoiceField(label="Роль", choices=CHOICES)
+    
+
+    def __init__(self, *args, **kwargs):
+        self.id = kwargs.pop("id", None)
+        if kwargs.get("initial") is not None:
+            kwargs["initial"]["password"] = None
+        super().__init__(*args, **kwargs)
+        self.fields['username'].widget.attrs.update({'class': 'common-field input-field'})
+        self.fields['password'].widget.attrs.update({'class': 'common-field input-field'})
+        self.fields['role'].widget.attrs.update({'class': 'select-field input-field'})
+        role = User.objects.get(id=self.id).groups.all()[0]
+        self.fields['role'].initial = role
+
+
+    def clean_username(self):
+        username = self.cleaned_data.get('username')
+        if User.objects.exclude(id=self.id).filter(username=username).exists():
+            raise ValidationError("Имя уже занято")
+        return username
+
+
+    def save(self, commit=True):
+        user = User.objects.get(id=self.id)
+        password = self.cleaned_data.get("password")
+        if password != None and password:
+            user.set_password(password)
+        user.username = self.cleaned_data.get("username")
+        user.groups.clear()
+        if commit:
+            user.save()
+            user.groups.add(Group.objects.get(name=self.cleaned_data.get("role")))
+            user.save()
+        return user   

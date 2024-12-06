@@ -3,12 +3,12 @@ document.addEventListener("DOMContentLoaded", function () {
     var search_options = document.getElementById("search-options")
     if(search_options){
         const text_input_fields = ["order_type", "date", "email", "phone_number", "full_name", "company_name", "vendor", "metal_type","metal_grade", "specialty",
-             "serial_number", "machine_name", "material_id", "order_id", "employee_id", "machine_id", "start_date", "end_date", "month"]
-        const interval_input_fields = ["date_interval", "cost", "quantity", "month_interval"]
+             "serial_number", "machine_name", "material_id", "order_id", "employee_id", "machine_id", "start_date", "end_date", "month", "username", "role"]
+        const interval_input_fields = ["date_interval", "cost", "quantity", "month_interval", "total_cost"]
         const non_input_field = ["unprocessed_applications", "processed_applications", "in_work", "executed"]
 
         function setHint(){
-            if (search_options.value == "cost" || search_options.value == "quantity"){
+            if (search_options.value == "cost" || search_options.value == "quantity" || search_options.value == "total_cost"){
                 document.getElementById("interval-start-input").setAttribute("placeholder", "начало диапазона")
                 document.getElementById("interval-end-input").setAttribute("placeholder", "конец диапазона")
             } else if (search_options.value == "order_type"){
@@ -129,6 +129,7 @@ document.addEventListener("DOMContentLoaded", function () {
         let current_row = row
         current_row.addEventListener('mouseenter',  function() {
             let row_buttons_container = document.getElementById(`row-buttons-${current_id}`);
+            console.log("asdasdasd")
             if (row_buttons_container) {
                 row_buttons_container.style.display = "block"; 
             }

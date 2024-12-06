@@ -17,7 +17,7 @@ class SignInForm(forms.Form):
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        if not(User.objects.filter(username=username).count()):
+        if not(User.objects.filter(username=username).exists()):
             raise ValidationError("Нет такого пользователя")
         return username
     
@@ -43,7 +43,7 @@ class SignUpForm(forms.ModelForm):
 
     def clean_username(self):
         username = self.cleaned_data.get('username')
-        if User.objects.filter(username=username).count():
+        if User.objects.filter(username=username).exists():
             raise ValidationError("Имя уже занято")
         return username
     
@@ -57,7 +57,7 @@ class SignUpForm(forms.ModelForm):
         email = self.cleaned_data.get("email")
         if not (re.match(r"[^@\s]+\@[^@\s]+\.[^@\s]{2,}$", email) and email.count('.') > 0):
             raise ValidationError("Некорректный почтовый адрес")
-        if Client.objects.filter(Q(email=email) & Q(full_name__isnull=False)).count():
+        if Client.objects.filter(Q(email=email) & Q(full_name__isnull=False)).exists():
             raise ValidationError("Почта уже занята")
         return email
     

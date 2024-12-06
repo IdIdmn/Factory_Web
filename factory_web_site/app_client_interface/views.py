@@ -3,7 +3,6 @@ from django.urls import reverse
 from django.forms import model_to_dict
 from .models import *
 from .forms import *
-import datetime
 from django.db.models import Sum
 from urllib.parse import urlencode
 from django.contrib.auth.decorators import login_required
@@ -32,8 +31,12 @@ def is_Client(user):
     return user.groups.filter(name='Client').exists()
 
 
+def is_Admin(user):
+    return user.groups.filter(name='Admin').exists()
+
+
 def is_Employee(user):
-    return is_Manager(user) or is_Chief(user) or is_PurchaseDepartmentEmployee(user)
+    return is_Manager(user) or is_Chief(user) or is_PurchaseDepartmentEmployee(user) or is_Admin(user)
 
 
 def main_page(request):
@@ -63,6 +66,8 @@ def main_page(request):
                 employee_url = reverse("employee:employees")
             elif is_PurchaseDepartmentEmployee(current_user):
                 employee_url = reverse("employee:vendors")
+            elif is_Admin(current_user):
+                employee_url = reverse("employee:users")
         context = {
             'form': form, 
             'title': "МОЗ №1",
@@ -124,17 +129,17 @@ def client_profile(request):
             current_params ="?" + urlencode(search_params)
         else:
             current_params = ""
-            context = {
-                'title': "Профиль", 
-                "current_params": current_params, 
-                "empty_table_phrase": empty_table_phrase, 
-                "form": form , 
-                'total_spendings' : total_spendings, 
-                "user_orders": user_orders,
-                "sort_direction": change_direction(sort_direction) , 
-                'model_field_titles': Order.get_fields_titles_ru_en_dict(), 
-                "table_column_titles": Order.get_profile_order_list_titles()
-            }
+        context = {
+            'title': "Профиль", 
+            "current_params": current_params, 
+            "empty_table_phrase": empty_table_phrase, 
+            "form": form , 
+            'total_spendings' : total_spendings, 
+            "user_orders": user_orders,
+            "sort_direction": change_direction(sort_direction) , 
+            'model_field_titles': Order.get_fields_titles_ru_en_dict(), 
+            "table_column_titles": Order.get_profile_order_list_titles()
+        }
         return render(request, "client-profile.html", context)
 
 

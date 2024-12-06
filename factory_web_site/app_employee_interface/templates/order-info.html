@@ -32,7 +32,7 @@
                 <p class="order-info-text">Были закуплены следующие материалы:</p>
                 <ul>
                     {% for supply in supplies %}
-                        <li>{{supply.material.metal_type}} {{supply.material.metal_grade}} — {{supply.quantity}} килограмм(-а/-ов) от компании "{{supply.material.vendor.company_name}}" общей стоимостью: {{supply.cost}} рублей</li>
+                        <li>{{supply.material.metal_type}} {{supply.material.metal_grade}} — {{supply.quantity}} килограмм(-а/-ов) от компании "{{supply.material.vendor.company_name}}" общей стоимостью: {{supply.cost}} рублей ({{supply.date}})</li>
                     {% endfor %}
                 </ul>
             {% else %}

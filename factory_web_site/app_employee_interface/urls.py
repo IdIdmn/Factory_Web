@@ -13,6 +13,7 @@ urlpatterns = [
     path('supplies/', supplies_list, name="supplies"),
     path('materials/', materials_list, name="materials"),
     path('schedule/', schedule, name="schedule"),
+    path('users/', users_list, name="users"),
     # sort by column
     path('sort_by/<model_name>/<sort_by_column>/<sort_direction>/', sort_table, name="sort_by"),
     # reset search query
